@@ -1,0 +1,16 @@
+ray_env/
+__pycache__/
+.venv/
+*.pyc
+.mypy_cache/
+*.egg-info/
+*.egg
+*.swp
+*.swo
+*.swn
+.DS_Store
+.ipynb_checkpoints/
+.vscode
+.log
+mlruns/
+logs/
