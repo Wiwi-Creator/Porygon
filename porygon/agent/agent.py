@@ -2,8 +2,10 @@ import os
 from langchain.agents import Tool, AgentExecutor, create_react_agent
 from langchain_openai import AzureChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain.prompts import PromptTemplate
+from langchain.tools.render import render_text_description
+from langchain_xai import ChatXAI
+from langchain_core.messages import HumanMessage
 
 
 def search_tool(query: str) -> str:
@@ -13,10 +15,7 @@ def search_tool(query: str) -> str:
 
 def calculator_tool(query: str) -> str:
     """Simple calculator tool"""
-    try:
-        return str(eval(query))
-    except:
-        return "Calculation error, please check the input format"
+    return str(eval(query))
 
 
 tools = [
@@ -32,39 +31,46 @@ tools = [
     )
 ]
 
+#llm = AzureChatOpenAI(
+#    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+#    azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+#    openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+#    temperature=0.1
+#)
 
-llm = AzureChatOpenAI(
-            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-            azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
-            openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-            temperature=0.1
-            )
+llm = ChatXAI(
+    model="grok-2-1212",
+    api_key=os.environ["XAI_API_KEY"])
 
-prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(
-                content="""You are a helpful assistant.
-                            You can use the following tools to answer user questions:
-                            Search: Use this to search for information
-                            Calculator: Use this to perform mathematical calculations
+tool_descriptions = render_text_description(tools)
+tool_names = ", ".join([tool.name for tool in tools])
 
-                            Use the following format:
-                            Question: The user's question
-                            Thought: How you should solve this problem
-                            Action: The tool name
-                            Action Input: The input to the tool
-                            Observation: The result from the tool
-                            ... (You can repeat Action/Action Input/Observation steps)
-                            Thought: Now I know the final answer
-                            Final Answer: The final answer to give to the user
-                        """),
-            MessagesPlaceholder(variable_name="chat_history"),
-            HumanMessage(content="{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad")
-                    ]
-                                          )
+prompt = PromptTemplate.from_template("""You are a helpful assistant.
+You can use the following tools to answer user questions:
+{tools}
+
+Use the following format:
+Question: The user's question
+Thought: How you should solve this problem
+Action: one of [{tool_names}]
+Action Input: The input to the tool
+Observation: The result from the tool
+... (You can repeat Action/Action Input/Observation steps)
+Thought: Now I know the final answer
+Final Answer: The final answer to give to the user
+
+Question: {input}
+{agent_scratchpad}""")
 
 # Create AI Agent
-agent = create_react_agent(llm, tools, prompt)
+agent = create_react_agent(
+    llm,
+    tools,
+    prompt.partial(
+        tools=tool_descriptions,
+        tool_names=tool_names
+    )
+)
 
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
