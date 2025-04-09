@@ -3,7 +3,7 @@ import mlflow
 from mlflow.pyfunc import PythonModel
 from mlflow.models.signature import infer_signature
 import datetime
-from agent import agent_executor
+from porygon.agent.chat_agent.agent import agent_executor
 
 
 mlflow.set_tracking_uri("http://localhost:5010")
