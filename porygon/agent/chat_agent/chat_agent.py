@@ -131,21 +131,14 @@ class PorygonChatModel(BaseChatModel):
         return {"response": "Invalid input format"}
 
 
-# 為了保持兼容性，保留 ChatAgent 類但基於 PorygonChatModel 實現
+
 class ChatAgent(PorygonChatModel):
     """Chat agent based on LangChain with conversation memory."""
     pass
 
 
-if __name__ == "__main__":
-    # 這部分代碼只會在直接執行 chat_agent.py 時運行
-    # 創建 ChatAgent 實例
-    chat_agent_config = {
-        "model_name": os.environ.get("MODEL_NAME", "grok-2-1212")
-    }
-
-    # 實例化 ChatAgent
-    agent = ChatAgent(model_name=chat_agent_config["model_name"])
-
-    # 設置 MLflow 模型
-    mlflow.models.set_model(model=agent)
+chat_agent_config = {
+    "model_name": os.environ.get("MODEL_NAME", "grok-2-1212")
+}
+agent = ChatAgent(model_name=chat_agent_config["model_name"])
+mlflow.models.set_model(model=agent)

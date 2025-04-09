@@ -170,10 +170,5 @@ class ChatAgent:
         return {"response": response}
 
 
-if __name__ == "__main__":
-    # 這部分代碼只會在直接執行 chat_agent.py 時運行
-    # 創建 agent
-    agent = create_porygon_agent()
-    
-    # 設置 MLflow 模型
-    mlflow.models.set_model(model=agent)
+agent = create_porygon_agent()
+mlflow.models.set_model(model=agent)
