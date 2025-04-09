@@ -1,11 +1,11 @@
 import os
+import mlflow
 from langchain.agents import Tool, AgentExecutor, create_react_agent
 from langchain_openai import AzureChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.tools.render import render_text_description
 from langchain_xai import ChatXAI
-from langchain_core.messages import HumanMessage
 
 
 def search_tool(query: str) -> str:
@@ -39,28 +39,31 @@ tools = [
 #)
 
 llm = ChatXAI(
-    model="grok-2-1212",
-    api_key=os.environ["XAI_API_KEY"])
+        model="grok-2-1212",
+        api_key=os.environ["XAI_API_KEY"]
+        )
 
 tool_descriptions = render_text_description(tools)
 tool_names = ", ".join([tool.name for tool in tools])
 
-prompt = PromptTemplate.from_template("""You are a helpful assistant.
-You can use the following tools to answer user questions:
-{tools}
+prompt = PromptTemplate.from_template("""
+                                    You are a helpful assistant.
+                                    You can use the following tools to answer user questions:
+                                    {tools}
 
-Use the following format:
-Question: The user's question
-Thought: How you should solve this problem
-Action: one of [{tool_names}]
-Action Input: The input to the tool
-Observation: The result from the tool
-... (You can repeat Action/Action Input/Observation steps)
-Thought: Now I know the final answer
-Final Answer: The final answer to give to the user
+                                    Use the following format:
+                                    Question: The user's question
+                                    Thought: How you should solve this problem
+                                    Action: one of [{tool_names}]
+                                    Action Input: The input to the tool
+                                    Observation: The result from the tool
+                                    ... (You can repeat Action/Action Input/Observation steps)
+                                    Thought: Now I know the final answer
+                                    Final Answer: The final answer to give to the user
 
-Question: {input}
-{agent_scratchpad}""")
+                                    Question: {input}
+                                    {agent_scratchpad}
+                                    """)
 
 # Create AI Agent
 agent = create_react_agent(
@@ -82,6 +85,4 @@ agent_executor = AgentExecutor(
     handle_parsing_errors=True
 )
 
-# Test Agent via API (FastAPI)
-response = agent_executor.invoke({"input": "What is artificial intelligence? Then calculate 2+2 equals what?"})
-print(response["output"])
+mlflow.models.set_model(agent_executor)
