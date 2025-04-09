@@ -1,12 +1,13 @@
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
-from langchain_core.messages import HumanMessage, AIMessage
 from langchain_xai import ChatXAI
 from langchain_core.callbacks import CallbackManager
 from langchain_core.callbacks.base import BaseCallbackHandler
+from langchain_core.language_models.chat_models import BaseChatModel
+import mlflow.models
 
 
 class ChatTrackingCallbackHandler(BaseCallbackHandler):
@@ -47,16 +48,17 @@ class ChatTrackingCallbackHandler(BaseCallbackHandler):
             })
 
 
-class ChatAgent:
-    """Chat agent based on LangChain with conversation memory."""
-
+class PorygonChatModel(BaseChatModel):
+    """Custom chat model wrapper for MLflow compatibility"""
+    
+    llm: Any
+    conversation: Any
+    memory: Any
+    callback_handler: Any
+    
     def __init__(self, model_name: str = "grok-2-1212"):
-        """
-        Initialize the chat agent.
-
-        Args:
-            model_name: The name of the model to use.
-        """
+        """Initialize the chat model."""
+        super().__init__()
         self.callback_handler = ChatTrackingCallbackHandler()
         self.callback_manager = CallbackManager([self.callback_handler])
 
@@ -90,37 +92,27 @@ class ChatAgent:
             prompt=prompt,
             verbose=True
         )
-
-    def chat(self, user_input: str) -> str:
-        """
-        Process a user message and return the AI response.
-
-        Args:
-            user_input: The user's message.
-
-        Returns:
-            The AI's response.
-        """
-        response = self.conversation.predict(input=user_input)
-        return response
+    
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        """Generate a response."""
+        if messages:
+            user_input = messages[-1].content
+            response = self.conversation.predict(input=user_input)
+            from langchain_core.messages import AIMessage
+            return {"generations": [[AIMessage(content=response)]]}
+        return {"generations": [[]]}
+    
+    @property
+    def _llm_type(self) -> str:
+        """Return the type of LLM."""
+        return "porygon_chat_model"
 
     def get_chat_history(self) -> List[Dict[str, str]]:
-        """
-        Get the full chat history.
-
-        Returns:
-            A list of message dictionaries with 'type' and 'content'.
-        """
-        # Get interactions from the callback handler
+        """Get the full chat history."""
         return self.callback_handler.interactions
 
     def get_memory_buffer(self) -> str:
-        """
-        Get the current memory buffer as a string.
-
-        Returns:
-            String representation of the memory buffer.
-        """
+        """Get the current memory buffer as a string."""
         return self.memory.buffer
 
     def clear_memory(self) -> None:
@@ -128,27 +120,32 @@ class ChatAgent:
         self.memory.clear()
         self.callback_handler.interactions = []
 
+    def invoke(self, input_text: str) -> Dict[str, str]:
+        """Invoke the chat agent with the given input."""
+        if isinstance(input_text, str):
+            response = self.conversation.predict(input=input_text)
+            return {"response": response}
+        elif isinstance(input_text, dict) and "message" in input_text:
+            response = self.conversation.predict(input=input_text["message"])
+            return {"response": response}
+        return {"response": "Invalid input format"}
 
-# Example usage
+
+# 為了保持兼容性，保留 ChatAgent 類但基於 PorygonChatModel 實現
+class ChatAgent(PorygonChatModel):
+    """Chat agent based on LangChain with conversation memory."""
+    pass
+
+
 if __name__ == "__main__":
-    # Set environment variable (for testing)
-    if "XAI_API_KEY" not in os.environ:
-        os.environ["XAI_API_KEY"] = "your-api-key-here"
+    # 這部分代碼只會在直接執行 chat_agent.py 時運行
+    # 創建 ChatAgent 實例
+    chat_agent_config = {
+        "model_name": os.environ.get("MODEL_NAME", "grok-2-1212")
+    }
 
-    agent = ChatAgent()
+    # 實例化 ChatAgent
+    agent = ChatAgent(model_name=chat_agent_config["model_name"])
 
-    # Example conversation
-    response1 = agent.chat("Hello, who are you?")
-    print(f"AI: {response1}")
-
-    response2 = agent.chat("What can you help me with?")
-    print(f"AI: {response2}")
-
-    # Print chat history
-    print("\nChat History:")
-    for interaction in agent.get_chat_history():
-        print(f"{interaction['type']}: {interaction['content']}")
-
-    # Print memory buffer
-    print("\nMemory Buffer:")
-    print(agent.get_memory_buffer())
+    # 設置 MLflow 模型
+    mlflow.models.set_model(model=agent)
