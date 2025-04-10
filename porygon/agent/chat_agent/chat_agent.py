@@ -131,7 +131,6 @@ class PorygonChatModel(BaseChatModel):
         return {"response": "Invalid input format"}
 
 
-
 class ChatAgent(PorygonChatModel):
     """Chat agent based on LangChain with conversation memory."""
     pass

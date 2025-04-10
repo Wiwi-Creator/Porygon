@@ -20,5 +20,5 @@ prompt = PromptTemplate(
 tools = load_tools(["wikipedia"], llm=llm)
 # serpapi
 # Create the agent
-agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=False)
 mlflow.models.set_model(model=agent)

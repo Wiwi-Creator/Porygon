@@ -1,11 +1,12 @@
+import os
 import mlflow
 from mlflow.models import infer_signature
-from chat_agent.wikipedia_agent import agent
+from wikipedia_agent import agent
 
 mlflow.set_tracking_uri("http://localhost:5010")
-mlflow.set_registry_uri("http://localhost:5500")
+mlflow.set_registry_uri("http://localhost:5010")
 EXPERIMENT_NAME = "/Users/w22151500@gmail.com/Porygon_demo"
-AGENT_NAME = "Porygon_wikipedia_agent"
+AGENT_NAME = "Porygon_wikipedia_agent_v2"
 
 experiment_info = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
 if experiment_info:
@@ -17,17 +18,17 @@ else:
 mlflow.langchain.autolog()
 
 input_example = {"input": "Who is the highest Pokemon?"}
+output_example = agent.invoke(input_example)
+signature = infer_signature(input_example, output_example)
 tags = {'Knowledge': 'Pokemon', 'Type': 'Wikipedia', 'Model': 'Grok-2-1212'}
+
 with mlflow.start_run(run_name="porygon-wikipedia-agent", tags=tags) as run:
     try:
-        # invoke
-        prediction = agent.invoke(input_example)
-        # model registry
         model_info = mlflow.langchain.log_model(
-            lc_model=agent,
-            artifact_path="porygon-chain",
+            lc_model=os.path.join(os.getcwd(), 'wikipedia_agent.py'),
+            artifact_path="porygon_chain",
             input_example=input_example,
-            signature=infer_signature(input_example, prediction),
+            signature=signature
         )
 
         print(f"Model uri: {model_info.model_uri}")
