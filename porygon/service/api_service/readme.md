@@ -1,0 +1,1 @@
+MODEL_URI = "runs:/6390ffad485b425c848553ba47d184d0/porygon_chain" # new model uri

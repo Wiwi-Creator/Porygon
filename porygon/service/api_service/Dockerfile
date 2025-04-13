@@ -12,12 +12,9 @@ COPY . ./
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV PYTHONPATH="${PYTHONPATH}:/app"
+ENV PYTHONPATH="${PYTHONPATH}:/app" \
+    GOOGLE_APPLICATION_CREDENTIALS="/app/configs/credentials.json" \
+    MLFLOW_TRACKING_URI="http://localhost:5000" \
+    MLFLOW_REGISTRY_URI="http://localhost:5000"
 
-ENV GOOGLE_APPLICATION_CREDENTIALS="/app/configs/credentials.json"
-
-ENV PORT=8080
-
-EXPOSE ${PORT}
-
-CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+CMD ["gunicorn", "app.main:app", "-k", "uvicorn.workers.UvicornWorker", "--preload", "--workers", "4", "--bind", "0.0.0.0:8080"]

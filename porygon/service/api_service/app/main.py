@@ -1,108 +1,90 @@
-# app/main.py
 import os
-from typing import Dict, Optional, List
-import mlflow
-from fastapi import FastAPI, HTTPException
+import logging
+import mlflow.pyfunc
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
-from dotenv import load_dotenv
+from typing import Dict, Any, List
 
-load_dotenv()
+# 配置日誌
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("porygon-api")
 
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5010")
-MODEL_URI = os.getenv("MODEL_URI", "models:/ChatAgent/latest")
+# 獲取環境變數
+MLFLOW_TRACKING_URI = "http://localhost:5010"
+MODEL_URI = "runs:/6390ffad485b425c848553ba47d184d0/porygon_chain"
 
-# init fastapi app
+# 設置 MLflow 追蹤服務器
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+# 初始化 FastAPI 應用
 app = FastAPI(
-    title="Porygon Chat API",
-    description="An API for interacting with Porygon, an AI assistant powered by Grok-2-1212",
+    title="Porygon API",
+    description="使用 MLflow 模型的 Wikipedia 查詢 API",
     version="1.0.0"
 )
 
+# 在模塊級別加載模型（只會在 preload 模式下加載一次）
+logger.info(f"正在加載模型: {MODEL_URI}")
+try:
+    model = mlflow.pyfunc.load_model(MODEL_URI)
+    logger.info("模型加載成功!")
+except Exception as e:
+    logger.error(f"模型加載失敗: {str(e)}")
+    # 這裡不拋出異常，讓應用可以啟動，API 端點將處理模型不可用的情況
 
-class ChatRequest(BaseModel):
-    message: str
-    history: Optional[List[Dict[str, str]]] = None
+class PredictRequest(BaseModel):
+    inputs: List[Dict[str, Any]]
 
-
-class ChatResponse(BaseModel):
-    response: str
-
-
-@app.on_event("startup")
-async def startup_event():
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-
-    try:
-        global loaded_model
-        loaded_model = mlflow.pyfunc.load_model(MODEL_URI)
-        print(f"Successfully loaded model from {MODEL_URI}")
-    except Exception as e:
-        print(f"Error loading model: {e}")
-        raise e
-
+class PredictResponse(BaseModel):
+    predictions: List[Any]
+    status: str = "success"
 
 @app.get("/health")
-async def health_check():
-    """Check if the API is up and running."""
-    return {"status": "healthy"}
+async def health():
+    """健康檢查端點"""
+    model_status = "loaded" if 'model' in globals() and model is not None else "not_loaded"
+    return {
+        "status": "healthy",
+        "model_status": model_status
+    }
 
-
-@app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    """Send a message to Porygon and get a response."""
+@app.post("/predict", response_model=PredictResponse)
+async def predict(request: PredictRequest):
+    """預測端點"""
     try:
-
-        if 'loaded_model' not in globals():
-            raise HTTPException(status_code=503, detail="Model not loaded yet")
-
-        model_input = {"input": request.message}
-        if request.history:
-            model_input["history"] = request.history
-
-        result = loaded_model.predict([model_input])[0]
-
-        if isinstance(result, dict) and "response" in result:
-            return ChatResponse(response=result["response"])
-        else:
-            return ChatResponse(response=str(result))
-
+        if 'model' not in globals() or model is None:
+            return {
+                "predictions": [],
+                "status": "error",
+                "message": "模型未加載或加載失敗"
+            }
+        
+        predictions = model.predict(request.inputs)
+        return {
+            "predictions": predictions.tolist() if hasattr(predictions, "tolist") else predictions,
+            "status": "success"
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+        logger.error(f"預測錯誤: {str(e)}")
+        return {
+            "predictions": [],
+            "status": "error",
+            "message": str(e)
+        }
 
-
-@app.get("/history")
-async def get_history():
-    """Get the chat history if available."""
+# 為了兼容您原來的接口，添加一個額外的端點
+@app.post("/query")
+async def query(request: Request):
+    """原始查詢端點"""
     try:
-        if 'loaded_model' not in globals():
-            raise HTTPException(status_code=503, detail="Model not loaded yet")
-
-        if hasattr(loaded_model, 'get_chat_history'):
-            history = loaded_model.get_chat_history()
-            return {"history": history}
-        else:
-            return {"message": "This model does not support history retrieval"}
-
+        data = await request.json()
+        inputs = data.get("inputs", [])
+        
+        if 'model' not in globals() or model is None:
+            return {"error": "模型未加載或加載失敗"}
+        
+        predictions = model.predict(inputs)
+        return {"predictions": predictions.tolist() if hasattr(predictions, "tolist") else predictions}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting history: {str(e)}")
-
-
-@app.post("/clear")
-async def clear_history():
-    """Clear the chat history if available."""
-    try:
-        if 'loaded_model' not in globals():
-            raise HTTPException(status_code=503, detail="Model not loaded yet")
-
-        if hasattr(loaded_model, 'clear_memory'):
-            loaded_model.clear_memory()
-            return {"status": "success", "message": "Chat history cleared"}
-        else:
-            return {"status": "warning", "message": "This model does not support history clearing"}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error clearing history: {str(e)}")
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+        logger.error(f"查詢錯誤: {str(e)}")
+        return {"error": str(e)}

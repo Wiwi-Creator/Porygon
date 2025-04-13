@@ -1,5 +1,6 @@
 import mlflow
-from langchain.agents import AgentType, initialize_agent, load_tools
+from langchain.agents import AgentType, initialize_agent
+from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_xai import ChatXAI
@@ -9,6 +10,7 @@ llm = ChatXAI(
     model="grok-2-1212"
 )
 
+mlflow.langchain.autolog()
 
 prompt = PromptTemplate(
     input_variables=["input"],
