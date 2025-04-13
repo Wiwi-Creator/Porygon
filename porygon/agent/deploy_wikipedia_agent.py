@@ -5,8 +5,9 @@ from wikipedia_agent import agent
 
 mlflow.set_tracking_uri("http://localhost:5010")
 mlflow.set_registry_uri("http://localhost:5010")
-EXPERIMENT_NAME = "/Users/w22151500@gmail.com/Porygon_demo"
-AGENT_NAME = "Porygon_wikipedia_agent_v2"
+
+EXPERIMENT_NAME = "/Users/w22151500@gmail.com/Porygon_EXP_V2"
+AGENT_NAME = "Porygon_wikipedia_agent"
 
 experiment_info = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
 if experiment_info:
@@ -32,11 +33,13 @@ with mlflow.start_run(run_name="porygon-wikipedia-agent", tags=tags) as run:
         )
 
         print(f"Model uri: {model_info.model_uri}")
-    except Exception as e:
-        print(f"Error : {e}")
+        registered_model = mlflow.register_model(
+            model_uri=model_info.model_uri,
+            name=AGENT_NAME
+        )
+        print(f"Registered model: {registered_model.name} version {registered_model.version}")
 
-mlflow.register_model(
-        model_uri=model_info.model_uri,
-        name=AGENT_NAME
-)
-# runs:/3ce7487656ab4f01adb74d426c8f5ad3/porygon_chain
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()

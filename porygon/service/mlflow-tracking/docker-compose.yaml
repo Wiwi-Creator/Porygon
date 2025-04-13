@@ -1,6 +1,11 @@
+networks:
+  mlflow-network-v1:
+    external: true
+
 services:
   db:
     image: mysql
+    container_name: mlflow-db
     environment:
       TZ: UTC
       MYSQL_ROOT_PASSWORD: root
@@ -9,8 +14,11 @@ services:
       MYSQL_PASSWORD: mlflow
     ports:
       - "3316:3306"
+    networks:
+      - mlflow-network-v1
 
   mlflow-artifact-server:
+    container_name: mlflow-artifact-server
     build: .
     expose:
       - "5500"
@@ -24,8 +32,11 @@ services:
       --gunicorn-opts "--log-level debug"
       --serve-artifacts
       --artifacts-only
+    networks:
+      - mlflow-network-v1
     
   mlflow:
+    container_name: mlflow-tracking-server
     tty: true
     build: .
     ports:
@@ -41,3 +52,5 @@ services:
       --backend-store-uri mysql+pymysql://'mlflow':'mlflow'@db:3306/mlflowruns
       --default-artifact-root http://127.0.0.1:5500/api/2.0/mlflow-artifacts/artifacts/experiments
       --gunicorn-opts "--log-level debug"
+    networks:
+      - mlflow-network-v1

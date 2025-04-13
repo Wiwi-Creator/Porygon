@@ -9,22 +9,20 @@ from typing import Dict, Any, List
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("porygon-api")
 
-# 獲取環境變數
-MLFLOW_TRACKING_URI = "http://localhost:5010"
-MODEL_URI = "runs:/6390ffad485b425c848553ba47d184d0/porygon_chain"
-
-# 設置 MLflow 追蹤服務器
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
+MLFLOW_REGISTRY_URI = os.getenv("MLFLOW_REGISTRY_URI")
+MLFLOW_ARTIFACT_URI = os.getenv("MLFLOW_ARTIFACT_URI")
+MODEL_URI = os.getenv("MODEL_URI")
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-
-# 初始化 FastAPI 應用
+mlflow.set_registry_uri(MLFLOW_REGISTRY_URI)
 app = FastAPI(
     title="Porygon API",
     description="使用 MLflow 模型的 Wikipedia 查詢 API",
     version="1.0.0"
 )
 
-# 在模塊級別加載模型（只會在 preload 模式下加載一次）
 logger.info(f"正在加載模型: {MODEL_URI}")
+model = None
 try:
     model = mlflow.pyfunc.load_model(MODEL_URI)
     logger.info("模型加載成功!")
