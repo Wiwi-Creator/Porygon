@@ -1,4 +1,6 @@
 ray_env/
+dbdata/
+artifacts/
 __pycache__/
 .venv/
 *.pyc

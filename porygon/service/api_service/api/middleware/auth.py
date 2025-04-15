@@ -11,14 +11,10 @@ from aa_api.schemas import BaseResponse
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # 設定不需要認證的路徑
         public_paths = ["/docs", "/openapi.json", "/redoc", "/api/v1/public"]
 
-        # 檢查是否為公開路徑
         if any(request.url.path.startswith(path) for path in public_paths):
             return await call_next(request)
-
-        # 檢查 X-API-Key 頭 (API 金鑰)
         api_key = request.headers.get("X-API-Key")
         if api_key:
             try:

@@ -4,24 +4,22 @@ from typing import Dict, Any
 from fastapi import HTTPException, status
 
 
-# 用戶角色和權限定義
 ROLES_PERMISSIONS = {
     "admin": {
-        "endpoints": ["*"]  # 管理員可以訪問所有端點
+        "endpoints": ["*"]
     },
     "data_scientist": {
         "endpoints": [
-            "GET /api/v1/AA/RAGenius/*",  # 允許所有 GET 請求
-            "POST /api/v1/AA/RAGenius/redmine"  # 允許特定 POST 請求
+            "GET /api/v1/AA/RAGenius/*",
+            "POST /api/v1/AA/RAGenius/redmine"
         ]
     },
     "viewer": {
-        "endpoints": ["GET /api/v1/AA/RAGenius/*"]  # 只允許 GET 請求
+        "endpoints": ["GET /api/v1/AA/RAGenius/*"]
     }
 }
 
 
-# API 金鑰與角色的對應關係 (實際應用中應存儲在數據庫)
 # TODO: 改為從數據庫獲取
 API_KEYS = {
     "admin_key": {"user_id": "admin1", "role": "admin"},

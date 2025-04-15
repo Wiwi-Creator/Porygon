@@ -1,6 +1,8 @@
+version: '3.9'
+
 networks:
-  mlflow-network-v1:
-    external: true
+  mlflow-network:
+    driver: bridge
 
 services:
   db:
@@ -15,42 +17,35 @@ services:
     ports:
       - "3316:3306"
     networks:
-      - mlflow-network-v1
+      - mlflow-network
+    volumes:
+      - mysql_data:/var/lib/mysql
 
-  mlflow-artifact-server:
-    container_name: mlflow-artifact-server
-    build: .
-    expose:
-      - "5500"
-    ports:
-      - "5500:5500"
-    command: >
-      mlflow server
-      --host 0.0.0.0
-      --port 5500
-      --artifacts-destination ./mlartifacts
-      --gunicorn-opts "--log-level debug"
-      --serve-artifacts
-      --artifacts-only
-    networks:
-      - mlflow-network-v1
-    
   mlflow:
-    container_name: mlflow-tracking-server
-    tty: true
+    container_name: mlflow-server
     build: .
     ports:
       - "5010:5000"
     depends_on:
       db:
         condition: service_started
-
     command: >
       mlflow server
       --host 0.0.0.0
       --port 5000
       --backend-store-uri mysql+pymysql://'mlflow':'mlflow'@db:3306/mlflowruns
-      --default-artifact-root http://127.0.0.1:5500/api/2.0/mlflow-artifacts/artifacts/experiments
+      --default-artifact-root file:///app/mlartifacts
       --gunicorn-opts "--log-level debug"
+      --serve-artifacts
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     networks:
-      - mlflow-network-v1
+      - mlflow-network
+    volumes:
+      - ./mlartifacts:/app/mlartifacts
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  mysql_data:

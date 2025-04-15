@@ -3,11 +3,8 @@ import mlflow
 from mlflow.models import infer_signature
 from wikipedia_agent import agent
 
-mlflow.set_tracking_uri("http://localhost:5010")
-
-AWS_ACCESS_KEY_ID = "minio"
-AWS_SECRET_ACCESS_KEY = "minio123"
-MLFLOW_S3_ENDPOINT_URL = "http://localhost:9000"
+mlflow.set_tracking_uri("http://mlflow:5000")
+mlflow.set_registry_uri("http://mlflow:5000")
 
 EXPERIMENT_NAME = "/Users/w22151500@gmail.com/Porygon_EXP_V2"
 AGENT_NAME = "Porygon_wikipedia_agent"
