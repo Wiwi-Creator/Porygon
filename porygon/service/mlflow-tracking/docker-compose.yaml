@@ -34,12 +34,21 @@ services:
       --host 0.0.0.0
       --port 5000
       --backend-store-uri mysql+pymysql://'mlflow':'mlflow'@db:3306/mlflowruns
-      --default-artifact-root file:///app/mlartifacts
+      --default-artifact-root /app/mlartifacts
       --gunicorn-opts "--log-level debug"
       --serve-artifacts
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    environment:
+      - XAI_API_KEY=${XAI_API_KEY}
+      - XAI_DEPLOYMENT_NAME=${XAI_DEPLOYMENT_NAME}
+      - XAI_ENDPOINT=${XAI_ENDPOINT}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_DEPLOYMENT_NAME=${AZURE_OPENAI_DEPLOYMENT_NAME}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
+      - SERPAPI_API_KEY=${SERPAPI_API_KEY}
     networks:
       - mlflow-network
     volumes:

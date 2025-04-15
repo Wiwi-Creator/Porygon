@@ -15,7 +15,7 @@ else:
 
 mlflow.langchain.autolog()
 
-model_uri = "runs:/f4ca509e25394bf09369be68cbe57b80/porygon_chain"
+model_uri = "runs:/a30454d17c37413ba0bb77c2f66dd102/porygon_chain"
 loaded_model = mlflow.pyfunc.load_model(model_uri)
 
 test_questions = [

@@ -13,7 +13,6 @@ logger = logging.getLogger("porygon-api")
 
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
 MLFLOW_REGISTRY_URI = os.getenv("MLFLOW_REGISTRY_URI")
-MLFLOW_ARTIFACT_URI = os.getenv("MLFLOW_ARTIFACT_URI")
 MODEL_URI = os.getenv("MODEL_URI")
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
@@ -21,7 +20,6 @@ mlflow.set_registry_uri(MLFLOW_REGISTRY_URI)
 
 logger.info(f"MLFLOW_TRACKING_URI: {MLFLOW_TRACKING_URI}")
 logger.info(f"MLFLOW_REGISTRY_URI: {MLFLOW_REGISTRY_URI}")
-logger.info(f"MLFLOW_ARTIFACT_URI: {MLFLOW_ARTIFACT_URI}")
 logger.info(f"MODEL_URI: {MODEL_URI}")
 
 app = FastAPI(
