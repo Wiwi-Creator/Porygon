@@ -1,12 +1,11 @@
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-
-from aa_api.security.auth import (
+from porygon.service.api_service.api.security.api_key import (
     verify_api_key,
     check_endpoint_permission
 )
-from aa_api.schemas import BaseResponse
+from api.schemas import BaseResponse
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -15,6 +14,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         if any(request.url.path.startswith(path) for path in public_paths):
             return await call_next(request)
+
+        # CHeck X-API-Key Head (API Key)
         api_key = request.headers.get("X-API-Key")
         if api_key:
             try:
@@ -24,7 +25,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                     status_code=401,
                     content=BaseResponse(
                         responseCode=401,
-                        responseMessage="無效的 API 金鑰",
+                        responseMessage="Invalide API Key.",
                         results=None
                     ).model_dump()
                 )
@@ -39,10 +40,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 ).model_dump()
             )
 
-        # 添加用戶信息到請求狀態
         request.state.user = user_info
 
-        # 檢查端點權限
         endpoint_path = request.url.path
         method = request.method
 
@@ -56,5 +55,4 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 ).model_dump()
             )
 
-        # 繼續處理請求
         return await call_next(request)

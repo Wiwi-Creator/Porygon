@@ -1,6 +1,5 @@
 import re
 from typing import Dict, Any
-
 from fastapi import HTTPException, status
 
 
@@ -20,11 +19,10 @@ ROLES_PERMISSIONS = {
 }
 
 
-# TODO: 改為從數據庫獲取
 API_KEYS = {
     "admin_key": {"user_id": "admin1", "role": "admin"},
     "api_key_for_scientist": {"user_id": "scientist1", "role": "data_scientist"},
-    "api_key_for_viewer": {"user_id": "viewer1", "role": "viewer"}
+    "api_key_for_customer": {"user_id": "customer1", "role": "viewer"}
 }
 
 
@@ -36,7 +34,7 @@ def verify_api_key(api_key: str) -> Dict[str, Any]:
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="無效的 API 金鑰"
+        detail="Invalide API Key."
     )
 
 

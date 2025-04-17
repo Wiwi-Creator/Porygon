@@ -1,11 +1,12 @@
 import os
+from mlflow import MlflowClient
 import mlflow
 from mlflow.models import infer_signature
 from wikipedia_agent import agent
 
 mlflow.set_tracking_uri("http://mlflow:5000")
 mlflow.set_registry_uri("http://mlflow:5000")
-
+client = MlflowClient()
 EXPERIMENT_NAME = "/Users/w22151500@gmail.com/Porygon_EXP_V2"
 AGENT_NAME = "Porygon_wikipedia_agent"
 
@@ -37,6 +38,13 @@ with mlflow.start_run(run_name="porygon-wikipedia-agent", tags=tags) as run:
             model_uri=model_info.model_uri,
             name=AGENT_NAME
         )
+
+        client.set_registered_model_alias(
+            name=AGENT_NAME,
+            alias="challenger",
+            version="1"
+        )
+
         print(f"Registered model: {registered_model.name} version {registered_model.version}")
 
     except Exception as e:
