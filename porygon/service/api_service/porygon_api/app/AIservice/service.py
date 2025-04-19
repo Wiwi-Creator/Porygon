@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Any
-from porygon_api.app.agent.schemas import QueryRequest, PredictResponse
+from porygon_api.app.AIservice.schemas import QueryRequest, PredictResponse
 from porygon_api.model_manager import model_manager
 
 logger = logging.getLogger(__name__)

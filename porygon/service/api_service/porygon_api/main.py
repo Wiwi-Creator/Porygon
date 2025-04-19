@@ -4,9 +4,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from porygon_api.model_manager import model_manager
-from porygon_api.app.agent.router import router as agent_router
+from porygon_api.app.AIservice.router import router as agent_router
+from porygon_api.app.UserQuery.router import router as userquery_router
 from porygon_api.middleware.auth import AuthMiddleware
 from porygon_api.middleware.http import HttpMiddleware
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,7 @@ app = FastAPI(
 # include router
 api_predix = "/api/v1/porygon"
 app.include_router(agent_router, prefix=f"{api_predix}/AIservice")
+app.include_router(userquery_router, prefix=f"{api_predix}/UserQuery")
 
 app.add_middleware(AuthMiddleware)
 app.add_middleware(HttpMiddleware)
@@ -53,14 +56,12 @@ async def health_check():
 async def startup_event():
     """應用啟動時執行的操作"""
     logger.info("Porygon API 服務正在啟動...")
-    
-    # 確保模型管理器已初始化（雖然引入時已經初始化，但為了明確記錄）
+
+    # 確保模型管理器已初始化
     if model_manager.get_model() is not None:
         logger.info("模型已成功預加載，服務準備就緒")
     else:
         logger.warning("模型未成功預加載，服務可能無法正常工作")
-    
-    logger.info("Porygon API 服務啟動完成")
 
 
 # 應用關閉事件處理
@@ -68,5 +69,4 @@ async def startup_event():
 async def shutdown_event():
     """應用關閉時執行的操作"""
     logger.info("Porygon API 服務正在關閉...")
-    # 這裡可以添加資源清理代碼
     logger.info("Porygon API 服務已關閉")

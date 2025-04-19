@@ -1,8 +1,8 @@
 import logging
 from fastapi import APIRouter, Depends
-from porygon_api.app.agent.schemas import QueryRequest, QueryResponse
-from porygon_api.app.agent.dependencies import get_ai_service
-from porygon_api.app.agent.service import AIService
+from porygon_api.app.AIservice.schemas import QueryRequest, QueryResponse
+from porygon_api.app.AIservice.dependencies import get_ai_service
+from porygon_api.app.AIservice.service import AIService
 from porygon_api.model_manager import model_manager
 
 logger = logging.getLogger(__name__)
