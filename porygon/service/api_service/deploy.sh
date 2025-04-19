@@ -17,7 +17,7 @@ SERVICE_ACCOUNT="931091704211-compute@developer.gserviceaccount.com"
 CLOUD_SQL="genibuilder:asia-east1:mlflow"
 
 ### -------- DEPLOY TO CLOUD RUN --------
-echo "Deploying MLflow to Cloud Run..."
+echo "Deploying Porygon API to Cloud Run..."
 
 gcloud run deploy "$SERVICE_NAME" \
   --project="$PROJECT_ID" \
@@ -28,7 +28,6 @@ gcloud run deploy "$SERVICE_NAME" \
   --port=$PORT \
   --memory="$MEMORY" \
   --cpu="$CPU" \
-  --set-env-vars=GCP_PROJECT=$PROJECT_ID \
+  --set-env-vars="GCP_PROJECT=$PROJECT_ID,PYTHONPATH=/app" \
   --add-cloudsql-instances=$CLOUD_SQL \
   --service-account=$SERVICE_ACCOUNT
-

@@ -20,7 +20,7 @@ docker run --rm -d\
   -e AZURE_OPENAI_DEPLOYMENT_NAME=${AZURE_OPENAI_DEPLOYMENT_NAME} \
   -e AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION} \
   -e SERPAPI_API_KEY=${SERPAPI_API_KEY} \
-  -v $(pwd)/../mlflow-tracking/mlartifacts:/app/mlartifacts \
+
   porygon-fastapi
 
 echo "Porygon API 服務已啟動，請訪問 http://localhost:8080/docs 查看 API 文檔"

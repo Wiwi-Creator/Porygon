@@ -1,7 +1,7 @@
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from porygon.service.api_service.porygon_api.security.api_key import (
+from porygon_api.security.api_key import (
     verify_api_key,
     check_endpoint_permission
 )

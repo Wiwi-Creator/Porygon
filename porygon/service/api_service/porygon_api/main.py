@@ -1,14 +1,12 @@
 import os
-import time
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from porygon_api.model_manager import model_manager
 from porygon_api.app.agent.router import router as agent_router
-from porygon_api.app.user_query.router import router as userquery_router
 from porygon_api.middleware.auth import AuthMiddleware
+from porygon_api.middleware.http import HttpMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +20,9 @@ app = FastAPI(
 # include router
 api_predix = "/api/v1/porygon"
 app.include_router(agent_router, prefix=f"{api_predix}/AIservice")
-app.include_router(userquery_router, prefix=f"{api_predix}/UserQuery")
 
 app.add_middleware(AuthMiddleware)
+app.add_middleware(HttpMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,26 +30,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
-
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    start_time = time.time()
-    logger.info(f"開始處理請求: {request.method} {request.url.path}")
-
-    try:
-        response = await call_next(request)
-        process_time = time.time() - start_time
-        response.headers["X-Process-Time"] = str(process_time)
-        logger.info(f"完成請求處理，耗時: {process_time:.4f}秒")
-        return response
-    except Exception as e:
-        process_time = time.time() - start_time
-        logger.error(f"請求處理失敗: {str(e)}，耗時: {process_time:.4f}秒")
-        return JSONResponse(
-            status_code=500,
-            content={"detail": "內部服務器錯誤"}
-        )
 
 
 @app.get("/health")

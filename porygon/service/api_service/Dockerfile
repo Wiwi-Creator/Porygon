@@ -12,10 +12,12 @@ RUN apt-get update && apt-get install -y \
 RUN pip install poetry==1.8.3
 RUN poetry install
 
-ENV PYTHONPATH="${PYTHONPATH}:/app" \
-    MLFLOW_TRACKING_URI="" \
-    MLFLOW_REGISTRY_URI="" \
-    MLFLOW_ARTIFACT_URI="" \
-    MODEL_URI=""
+ENV PYTHONPATH="${PYTHONPATH}:/app"
 
-CMD ["poetry", "run", "gunicorn", "api.main:app", "-k", "uvicorn.workers.UvicornWorker", "--preload", "--workers", "4", "--bind", "0.0.0.0:8080"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+COPY entry-point.sh /app/entry-point.sh
+RUN chmod +x /app/entry-point.sh
+
+ENTRYPOINT ["/app/entry-point.sh"]

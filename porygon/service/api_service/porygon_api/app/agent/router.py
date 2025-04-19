@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 
-from porygon.service.api_service.porygon_api.app.agent.v1 import wikipedia_agent
-
+from porygon_api.app.agent.v1 import wikipedia_agent
 
 router = APIRouter()
 
