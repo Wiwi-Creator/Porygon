@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class HttpMiddleware(BaseHTTPMiddleware):
-    async def process_time_middleware(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         logger.info(f"開始處理請求: {request.method} {request.url.path}")
 

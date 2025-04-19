@@ -3,10 +3,10 @@ import mlflow
 from mlflow.models import infer_signature
 from wikipedia_agent import agent
 
-mlflow.set_tracking_uri("http://localhost:5010")
+mlflow.set_tracking_uri("https://mlflow-931091704211.asia-east1.run.app")
+mlflow.set_registry_uri("https://mlflow-931091704211.asia-east1.run.app")
 
-
-EXPERIMENT_NAME = "/Users/w22151500@gmail.com/Porygon_EXP_V2"
+EXPERIMENT_NAME = "Porygon_EXPERIMENT"
 AGENT_NAME = "Porygon_wikipedia_agent"
 
 experiment_info = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
