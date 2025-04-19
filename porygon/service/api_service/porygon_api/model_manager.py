@@ -31,7 +31,7 @@ class ModelManager:
         logger.info("初始化 ModelManager")
         self.model = None
         #self.model_uri = os.getenv("MODEL_URI")
-        self.model_uri = "gs://wiwi-bucket/2/227e20db6a7640de91935ce7930b4b4d/artifacts/porygon_chain"
+        self.model_uri = "gs://wiwi-bucket/1/15a6b7e29ad34d3fa1484ee9e0621774/artifacts/porygon_chain"
         self.mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
         self.mlflow_registry_uri = os.getenv("MLFLOW_REGISTRY_URI")
 

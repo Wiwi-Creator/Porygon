@@ -78,3 +78,20 @@ gsutil iam ch serviceAccount:wiwi-service-account@genibuilder.iam.gserviceaccoun
 
 # 或者授予更全面的 Storage Object Admin 權限
 gsutil iam ch serviceAccount:wiwi-service-account@genibuilder.iam.gserviceaccount.com:roles/storage.objectAdmin gs://wiwi-bucket
+
+
+gcloud firestore databases create \
+  --project=genibuilder \
+  --database=member \
+  --location=asia-east1
+
+# 檢查 IAM 權限
+gcloud projects get-iam-policy genibuilder --format=json
+# admin 權限
+gcloud projects add-iam-policy-binding genibuilder \
+  --member="user:w22151500@gmail.com" \
+  --role="roles/datastore.owner"
+
+gcloud projects add-iam-policy-binding genibuilder \
+  --member="user:w22151500@gmail.com" \
+  --role="roles/datastore.user"

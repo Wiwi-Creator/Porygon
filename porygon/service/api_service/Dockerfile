@@ -13,6 +13,8 @@ RUN pip install poetry==1.8.3
 RUN poetry install
 
 ENV PYTHONPATH="${PYTHONPATH}:/app"
+ENV GOOGLE_SDK_PYTHON_LOGGING_SCOPE=google
+ENV GOOGLE_SDK_PYTHON_LOGGING_SCOPE=google.cloud.library_v1
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
