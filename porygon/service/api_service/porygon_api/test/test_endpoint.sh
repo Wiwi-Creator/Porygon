@@ -29,14 +29,9 @@ curl -X POST "http://localhost:8080/api/v1/porygon/UserQuery/item/" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: admin_key" \
   -d '{
-    "name": "Firestore測試產品",
-    "description": "這是存儲在Firestore的測試產品",
+    "name": "簡單測試產品",
+    "description": "這是一個簡單的測試產品",
     "price": 299.99,
     "quantity": 5,
-    "category": "測試類別",
-    "tags": ["firestore", "測試"],
-    "properties": {
-      "source": "API測試"
-    },
-    "collection": "products"
+    "category": "測試類別"
   }'

@@ -11,8 +11,6 @@ class ItemBase(BaseModel):
     price: float = Field(..., description="物品價格")
     quantity: int = Field(..., description="物品數量")
     category: Optional[str] = Field(None, description="物品類別")
-    tags: Optional[list] = Field(None, description="物品標籤")
-    properties: Optional[Dict[str, Any]] = Field(None, description="其他物品屬性")
 
 
 class CreateItemRequest(ItemBase):

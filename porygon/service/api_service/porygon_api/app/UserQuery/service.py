@@ -38,59 +38,53 @@ class ItemService:
             # 生成唯一 ID
             item_id = str(uuid.uuid4())
     
-            # 使用 SQLAlchemy 風格的參數化查詢
+            # 使用簡化的查詢，不包含 tags 和 properties
             query = """
-            INSERT INTO items (id, name, description, price, quantity, category, tags, properties)
-            VALUES (:id, :name, :description, :price, :quantity, :category, :tags, :properties)
-            RETURNING id, name, description, price, quantity, category, tags, properties
+            INSERT INTO items (id, name, description, price, quantity, category)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id, name, description, price, quantity, category
             """
     
-            params = {
-                "id": item_id,
-                "name": item.name,
-                "description": item.description,
-                "price": item.price,
-                "quantity": item.quantity,
-                "category": item.category,
-                "tags": item.tags,
-                "properties": item.properties
-            }
+            params = (
+                item_id,
+                item.name,
+                item.description,
+                item.price,
+                item.quantity,
+                item.category
+            )
     
             logger.info(f"準備在 Cloud SQL 中創建物品: {item.name}")
             result = cloud_sql_connector.execute_query(query, params)
     
-            if result["status"] == "success" and "data" in result and result["data"]:
-                created_item = result["data"][0]
+            if result["status"] == "success" and "data" in result:
+                created_item = result["data"][0] if result["data"] else None
                 logger.info(f"物品創建成功: {item_id}")
                 return created_item
             else:
                 logger.error(f"物品創建失敗: {result.get('message', '未知錯誤')}")
-                # 返回一個空的字典
+                # 返回一個空的物品字典，而不是 None
                 return {
                     "id": "",
                     "name": "",
                     "description": None,
                     "price": 0.0,
                     "quantity": 0,
-                    "category": None,
-                    "tags": None,
-                    "properties": None
+                    "category": None
                 }
     
         except Exception as e:
             logger.error(f"創建物品時發生錯誤: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            # 返回一個空的字典
+            # 返回一個空的物品字典，而不是 None
             return {
                 "id": "",
                 "name": "",
                 "description": None,
                 "price": 0.0,
                 "quantity": 0,
-                "category": None,
-                "tags": None,
-                "properties": None
+                "category": None
             }
 
     async def create_firestore_item(self, request: FirestoreItemRequest) -> Dict[str, Any]:
