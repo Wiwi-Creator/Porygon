@@ -101,10 +101,8 @@ class ModelManager:
     def predict(self, data):
         """
         使用模型進行預測
-
         Args:
             data: 模型輸入數據
-
         Returns:
             預測結果，如果模型未加載則返回 None
         """

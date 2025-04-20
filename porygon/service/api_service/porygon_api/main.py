@@ -1,6 +1,7 @@
 import os
 import logging
 from fastapi import FastAPI
+from fastapi import Query
 from fastapi.middleware.cors import CORSMiddleware
 from porygon_api.model_manager import model_manager
 from porygon_api.app.AIservice.router import router as agent_router
@@ -8,6 +9,8 @@ from porygon_api.app.UserQuery.router import router as userquery_router
 from porygon_api.middleware.auth import AuthMiddleware
 from porygon_api.middleware.http import HttpMiddleware
 from porygon_api.middleware.logging import BigQueryLoggingMiddleware
+from google.cloud import bigquery
+from porygon_api.middleware.logging import bq_client
 
 
 logger = logging.getLogger("porygon_api")
@@ -52,6 +55,37 @@ async def health_check():
         "version": "1.0.0"
     }
 
+
+@app.get("/metric")
+async def get_api_metrics(date: str = Query(None, description="日期格式 YYYY-MM-DD，默認為最近24小時")):
+
+    try:
+        if date:
+            date_filter = f"DATE(create_time) = '{date}'"
+        else:
+            date_filter = "create_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)"
+        query = f"""
+            SELECT
+                COUNT(*) as total_requests,
+                AVG(latency_ms) as average_latency_ms,
+                COUNTIF(status_code >= 400) / COUNT(*) as error_rate
+            FROM `genibuilder.porygon_api_logs.api_records`
+            WHERE {date_filter}
+            """
+
+        query_job = bq_client.query(query)
+        results = query_job.result()
+
+        for row in results:
+            return {
+                "total_requests": row.total_requests,
+                "average_latency_ms": row.average_latency_ms,
+                "error_rate": row.error_rate
+            }
+        return {"total_requests": 0, "average_latency_ms": 0, "error_rate": 0}
+    except Exception as e:
+        logging.error(f"Error retrieving metrics: {str(e)}")
+        return {"error": str(e), "total_requests": 0, "average_latency_ms": 0, "error_rate": 0}
 
 # 應用啟動事件處理
 @app.on_event("startup")

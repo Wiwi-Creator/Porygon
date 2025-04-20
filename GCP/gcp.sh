@@ -95,3 +95,31 @@ gcloud projects add-iam-policy-binding genibuilder \
 gcloud projects add-iam-policy-binding genibuilder \
   --member="user:w22151500@gmail.com" \
   --role="roles/datastore.user"
+
+gsutil iam ch serviceAccount:931091704211-compute@developer.gserviceaccount.com:objectViewer gs://wiwi-bucket
+
+gcloud projects add-iam-policy-binding genibuilder \
+  --member="serviceAccount:931091704211-compute@developer.gserviceaccount.com" \
+  --role="roles/storage.objectViewer"
+
+  gcloud projects add-iam-policy-binding genibuilder \
+  --member="serviceAccount:931091704211-compute@developer.gserviceaccount.com" \
+  --role="roles/bigquery.dataEditor"
+
+gcloud projects add-iam-policy-binding genibuilder \
+  --member="user:w22151500@gmail.com" \
+  --role="roles/bigquery.dataEditor"
+
+
+gcloud projects get-iam-policy genibuilder \
+  --flatten="bindings[].members" \
+  --format="table(bindings.role,bindings.members)" \
+  --filter="bindings.members:931091704211-compute@developer.gserviceaccount.com"
+
+gcloud projects get-iam-policy genibuilder --flatten="bindings[].members" --format="table(bindings.role,bindings.members)" --filter="bindings.members:w22151500@gmail.com"
+
+# 檢視 MLflow cloud run 權限
+gcloud run services add-iam-policy-binding mlflow \
+  --member="serviceAccount:931091704211-compute@developer.gserviceaccount.com" \
+  --role="roles/run.invoker" \
+  --region=asia-east1
