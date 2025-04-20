@@ -9,12 +9,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install poetry==1.8.3
-RUN poetry install
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+RUN pip install google-cloud-secret-manager
 
 ENV PYTHONPATH="${PYTHONPATH}:/app"
-ENV GOOGLE_SDK_PYTHON_LOGGING_SCOPE=google
-ENV GOOGLE_SDK_PYTHON_LOGGING_SCOPE=google.cloud.library_v1
 
 COPY entry-point.sh /app/entry-point.sh
 RUN chmod +x /app/entry-point.sh

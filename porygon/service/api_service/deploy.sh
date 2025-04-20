@@ -14,7 +14,7 @@ MLFLOW_TRACKING_URI="https://mlflow-931091704211.asia-east1.run.app"
 MLFLOW_REGISTRY_URI="https://mlflow-931091704211.asia-east1.run.app"
 IMAGE="asia-east1-docker.pkg.dev/genibuilder/porygon-api/porygon-api:latest"
 PORT=8000
-MEMORY="4Gi"
+MEMORY="8Gi"
 CPU=4
 SERVICE_ACCOUNT="931091704211-compute@developer.gserviceaccount.com"
 

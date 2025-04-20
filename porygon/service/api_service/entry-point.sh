@@ -44,7 +44,7 @@ fi
 
 if [[ -z "${PORT}" ]]; then
     export PORT=8000
-
+fi
 if [[ -z "${HOST}" ]]; then
     export HOST=0.0.0.0
 fi

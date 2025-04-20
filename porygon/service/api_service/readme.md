@@ -2,8 +2,30 @@
 
 ## Architecture
 
-Porygon API 是一個基於 FastAPI 的服務，提供 AI 模型預測和資料庫查詢功能。架構採用清晰的分層設計：
+Porygon API 是一個基於 FastAPI 的服務，提供 AI 模型預測和資料庫查詢功能。
 
+```mermaid
+flowchart LR
+    A[Client] -->|發送請求| B[Porygon API]
+    
+    B --> C{解析請求}
+    C -->|AI Service| D[AI 模型]
+    C -->|User Query| E[資料庫]
+    
+    D --> F[MLflow]
+    F --> G[Cloud Stroge]
+    
+    E --> H[Cloud SQL]
+    E --> I[Firestore]
+    
+    D --> J[API Response]
+    H --> J
+    I --> J
+    
+    J --> A
+```
+
+程式碼架構採用分層設計：
 1. **路由層 (Router Layer)**：處理 HTTP 請求路由和參數解析
 2. **服務層 (Service Layer)**：實現業務邏輯和模型交互
 3. **模型層 (Model Layer)**：加載和使用 AI 模型進行預測
@@ -131,9 +153,8 @@ class ItemBase(BaseModel):
 
 ### 主要職責
 
-- 管理數據庫連接
-- 提供數據庫操作接口
-- 處理數據庫事務和錯誤
+- 提供 API & DB 的操作對接
+- 處理 DB Transaction 和 Connection
 
 ### 實現細節
 
@@ -215,7 +236,6 @@ class HttpMiddleware(BaseHTTPMiddleware):
 ### 示例查詢
 
 ```sql
--- 查詢端點性能
 SELECT
   JSON_EXTRACT_SCALAR(jsonPayload, '$.path') AS endpoint,
   COUNT(*) AS request_count,
@@ -230,7 +250,7 @@ ORDER BY
   avg_time DESC;
 ```
 
-## 部署架構
+## Deplyment
 
 ### 本地測試
 
@@ -246,7 +266,7 @@ gunicorn porygon_api.main:app \
   --keep-alive 120
 ```
 
-### Cloud Run 部署
+### Deploy on Google Cloud Run
 
 1. **構建 Docker 鏡像**：
    ```bash
@@ -254,21 +274,14 @@ gunicorn porygon_api.main:app \
    ```
 
 2. **部署到 Cloud Run**：
-   ```bash
-   gcloud run deploy "porygon-api" \
-     --image="IMAGE_URL" \
-     --platform=managed \
-     --region="asia-east1" \
-     --allow-unauthenticated \
-     --port=8080 \
-     --memory="4Gi" \
-     --cpu=4
+   ```
+   sh deploy.sh
    ```
 
 3. **環境變數設置**：
-   - `GCP_PROJECT_ID`: GCP 項目 ID
-   - `MODEL_URI`: MLflow 模型 URI
-   - `MLFLOW_TRACKING_URI`: MLflow 追蹤服務器 URI
+   - `GCP_PROJECT_ID`: GCP Project ID
+   - `MODEL_URI`: MLflow Model URI
+   - `MLFLOW_TRACKING_URI`: MLflow Tracking Server URI
 
 ## API 端點
 
@@ -279,8 +292,8 @@ gunicorn porygon_api.main:app \
 
 1. **單例模式**: 確保服務和連接器只被實例化一次
 2. **依賴注入**: 通過 FastAPI 的依賴系統提供服務實例
-3. **中間件鏈**: 通過中間件鏈處理請求的通用邏輯
-4. **預加載策略**: 在服務啟動時預加載模型，提高性能
+3. **Middleware**: 通過中間件鏈處理請求的通用邏輯
+4. **Preload 策略**: 在服務啟動時預加載模型，提高性能
 5. **日誌集中化**: 將所有日誌集中到 Cloud Logging 和 BigQuery
 
 ## 安全性
@@ -292,7 +305,93 @@ gunicorn porygon_api.main:app \
 ## 日誌與監控最佳實踐
 
 1. **結構化日誌**: 使用 JSON 格式確保日誌可以被有效解析和查詢
-2. **包含上下文**: 在日誌中包含請求 ID、用戶 ID 等上下文信息
+2. **包含上下文**: 在日誌中包含request ID、Client ID ..etc
 3. **性能指標**: 記錄請求處理時間等性能指標
-4. **集中分析**: 將日誌導出到 BigQuery 進行深度分析
+4. **集中分析**: 將 Log 導出到 BigQuery 進行分析
 5. **設置警報**: 基於日誌數據設置異常Alert
+
+## HTTP Status Code
+
+### Success
+- **200 OK**: Request 成功處理，結果在 Respones 中返回
+
+### Client Error
+- **400 Bad Request**: 請求參數無效或缺失
+- **401 Unauthorized**: 缺少認證信息或認證失敗
+- **403 Forbidden**: 認證成功但沒有權限訪問請求的資源
+- **404 Not Found**: 請求的資源不存在
+
+### Server Error
+- **500 Internal Server Error**: 服務器遇到意外情況
+- **503 Service Unavailable**: 服務暫時不可用（如模型未加載）
+- **504 Gateway Timeout**: 處理請求時超時
+
+### Self-customized
+除了 HTTP 狀態碼外，Porygon API 還在 Response 中提供 `responseCode` 字段：
+
+- **200-299**: 成功處理
+- **400-499**: 客戶端錯誤
+- **500-599**: 服務器錯誤
+
+`responseMessage` 會提供更多具體錯誤描述。
+
+
+## 資料庫 Schema 設計
+
+Porygon API 使用兩種資料庫系統：Cloud SQL (PostgreSQL) 用於關係型數據和 Firestore 用於文檔型數據。
+
+### Cloud SQL Schema
+
+#### Table: items 
+```sql
+CREATE TABLE items (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    category VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+```
+-- Index
+CREATE INDEX idx_items_category ON items(category);
+CREATE INDEX idx_items_name ON items(name);
+
+### FireStore
+
+#### Collection: Product
+```json
+{
+  "Product_id": "string",  // 產品唯一標識符 (用於查詢)
+  "name": "string",        // 產品名稱
+  "description": "string", // 產品描述
+  "price": "number",       // 產品價格
+  "quantity": "number",    // 庫存數量
+  "category": "string",    // 產品類別
+  "properties": {          // 產品特性 (可選)
+    "key1": "value1",
+    "key2": "value2"
+  },
+  "tags": ["string"],      // 產品標籤 (可選)
+  "created_at": "timestamp", // 創建時間
+  "updated_at": "timestamp"  // 更新時間
+}
+```
+
+## TO-DO
+### 擴展方案
+
+1. **垂直擴展**：
+   - 升級 CPU 和 Memory 以處理更多負載 (Cloud SQL , Cloud Run)
+   - 建議：當 查詢複雜, 數據量變大, 請求量變大 時使用
+
+2. **水平擴展**：
+    - Google Kubernetes Engine: 高併發, 多個微服務的串接
+  
+3. **程式優化**:
+    - CICD
+    - 將 Cloud SQL & Firestore 邏輯分開
+    - AI Model Preload
+    - 高併發測試 (Ex: 透過 Mulit-thread 短時間內高併發測試 API 負載)
