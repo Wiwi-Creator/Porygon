@@ -1,6 +1,5 @@
 import logging
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 
 from porygon_api.app.UserQuery.schemas import FirestoreItemResponse, ItemResponse
 

@@ -1,8 +1,8 @@
 import os
 import logging
 import sqlalchemy
-from typing import Dict, Any
 from google.cloud import firestore
+
 
 logger = logging.getLogger(__name__)
 
@@ -74,10 +74,7 @@ class CloudSQLConnector:
             包含操作結果的字典
         """
         try:
-            # 確保引擎已連接
             engine = self.connect()
-
-            # 將查詢字符串轉換為 SQLAlchemy text 對象
             sql = sqlalchemy.text(query)
 
             with engine.connect() as conn:
@@ -143,6 +140,5 @@ class FirestoreConnector:
         return self.client
 
 
-# 全局連接器實例
 cloud_sql_connector = CloudSQLConnector()
 firestore_connector = FirestoreConnector()

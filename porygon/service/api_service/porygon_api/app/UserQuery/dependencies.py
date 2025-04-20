@@ -1,6 +1,5 @@
 from porygon_api.app.UserQuery.service import ItemService
 
-# 物品服務單例
 _item_service = None
 
 

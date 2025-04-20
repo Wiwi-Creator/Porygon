@@ -1,6 +1,5 @@
 from porygon_api.app.AIservice.service import AIService
 
-# RAG 服務單例
 _rag_service = None
 
 

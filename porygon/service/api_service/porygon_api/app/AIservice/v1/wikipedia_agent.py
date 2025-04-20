@@ -33,7 +33,6 @@ async def query_knowledge_base(
                 results=[]
             )
 
-        # 處理查詢
         results = await ai_service.predict(request)
         logger.info(f"Wikipedia 查詢處理完成: {results}")
 

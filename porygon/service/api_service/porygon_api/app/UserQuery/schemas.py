@@ -13,11 +13,6 @@ class ItemBase(BaseModel):
     category: Optional[str] = Field(None, description="物品類別")
 
 
-class CreateItemRequest(ItemBase):
-    """創建物品請求模型"""
-    pass
-
-
 class ItemResponse(BaseModel):
     """物品資料回應模型"""
     id: str
@@ -28,17 +23,6 @@ class ItemResponse(BaseModel):
     category: Optional[str] = None
     tags: Optional[list] = None
     properties: Optional[Dict[str, Any]] = None
-
-
-class CreateItemResponse(BaseResponse[ItemResponse]):
-    """創建物品回應"""
-    pass
-
-
-class FirestoreItemRequest(ItemBase):
-    """Firestore 物品請求模型"""
-    collection: str = Field(..., description="Firestore 集合名稱")
-    document_id: Optional[str] = Field(None, description="文檔 ID (可選)")
 
 
 class FirestoreItemResponse(BaseResponse[Dict[str, Any]]):

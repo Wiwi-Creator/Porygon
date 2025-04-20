@@ -1,9 +1,6 @@
 import logging
-import uuid
 from typing import Dict, Any, Optional
-from google.cloud import firestore
 
-from porygon_api.app.UserQuery.schemas import FirestoreItemRequest
 from porygon_api.database.db_connector import cloud_sql_connector, firestore_connector
 
 logger = logging.getLogger(__name__)
@@ -25,6 +22,7 @@ class ItemService:
             return
         logger.info("初始化 ItemService")
         self._initialized = True
+
     async def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
         """從 Cloud SQL 獲取特定物品
 

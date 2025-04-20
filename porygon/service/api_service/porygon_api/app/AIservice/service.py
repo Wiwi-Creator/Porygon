@@ -1,12 +1,13 @@
 import logging
-from typing import List, Dict, Any
+from typing import List
 from porygon_api.app.AIservice.schemas import QueryRequest, PredictResponse
 from porygon_api.model_manager import model_manager
 
 logger = logging.getLogger(__name__)
 
+
 class AIService:
-    _instance = None  # 單例模式的類變量
+    _instance = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -14,18 +15,18 @@ class AIService:
             cls._instance = super(AIService, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         if self._initialized:
             return
         logger.info("初始化 AIService")
         self._initialized = True
-    
+
     async def predict(self, request: QueryRequest) -> List[PredictResponse]:
         """使用模型進行預測
         Args:
             request: 查詢請求，包含用戶輸入
-            
+
         Returns:
             包含模型預測結果的響應列表
         """
