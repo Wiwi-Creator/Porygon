@@ -3,8 +3,9 @@ import uuid
 from typing import Dict, Any
 from google.cloud import firestore
 
-from porygon_api.app.UserQuery.schemas import ItemBase, FirestoreItemRequest
+from porygon_api.app.UserQuery.schemas import ItemBase, FirestoreItemRequest, ItemResponse
 from porygon_api.database.db_connector import cloud_sql_connector, firestore_connector
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,50 +29,69 @@ class ItemService:
 
     async def create_item(self, item: ItemBase) -> Dict[str, Any]:
         """在 Cloud SQL 中創建新物品
-
         Args:
             item: 物品資料
-
         Returns:
             包含操作結果的字典
         """
         try:
             # 生成唯一 ID
             item_id = str(uuid.uuid4())
-            # 準備插入資料
+    
+            # 使用 SQLAlchemy 風格的參數化查詢
             query = """
             INSERT INTO items (id, name, description, price, quantity, category, tags, properties)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (:id, :name, :description, :price, :quantity, :category, :tags, :properties)
             RETURNING id, name, description, price, quantity, category, tags, properties
             """
-
-            params = (
-                item_id,
-                item.name,
-                item.description,
-                item.price,
-                item.quantity,
-                item.category,
-                item.tags,
-                item.properties
-            )
-
+    
+            params = {
+                "id": item_id,
+                "name": item.name,
+                "description": item.description,
+                "price": item.price,
+                "quantity": item.quantity,
+                "category": item.category,
+                "tags": item.tags,
+                "properties": item.properties
+            }
+    
             logger.info(f"準備在 Cloud SQL 中創建物品: {item.name}")
             result = cloud_sql_connector.execute_query(query, params)
-
-            if result["status"] == "success" and "data" in result:
-                created_item = result["data"][0] if result["data"] else None
+    
+            if result["status"] == "success" and "data" in result and result["data"]:
+                created_item = result["data"][0]
                 logger.info(f"物品創建成功: {item_id}")
                 return created_item
             else:
                 logger.error(f"物品創建失敗: {result.get('message', '未知錯誤')}")
-                return None
-
+                # 返回一個空的字典
+                return {
+                    "id": "",
+                    "name": "",
+                    "description": None,
+                    "price": 0.0,
+                    "quantity": 0,
+                    "category": None,
+                    "tags": None,
+                    "properties": None
+                }
+    
         except Exception as e:
             logger.error(f"創建物品時發生錯誤: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            return None
+            # 返回一個空的字典
+            return {
+                "id": "",
+                "name": "",
+                "description": None,
+                "price": 0.0,
+                "quantity": 0,
+                "category": None,
+                "tags": None,
+                "properties": None
+            }
 
     async def create_firestore_item(self, request: FirestoreItemRequest) -> Dict[str, Any]:
         """在 Firestore 中創建新物品

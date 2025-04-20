@@ -24,53 +24,38 @@ async def create_item(
     try:
         logger.info(f"收到創建物品請求: {request.name}")
         result = await item_service.create_item(request)
-
-        if not result:
+        
+        if not result.get("id"):
             logger.error("物品創建失敗")
-            # 使用一個空的 ItemResponse 模型而非 None
-            empty_result = CreateItemResponse(
-                id="",
-                name="",
-                price=0.0,
-                quantity=0
-            )
             return CreateItemResponse(
                 responseCode=500,
                 responseMessage="物品創建失敗",
-                results=empty_result
+                results=result
             )
-
-        logger.info(f"物品創建成功: {result.get('id', '')}")
         
-        # 確保結果字典結構與 ItemResponse 模型一致
-        item_response = CreateItemResponse(
-            id=result.get('id', ''),
-            name=result.get('name', ''),
-            description=result.get('description'),
-            price=result.get('price', 0.0),
-            quantity=result.get('quantity', 0),
-            category=result.get('category'),
-            tags=result.get('tags'),
-            properties=result.get('properties')
-        )
-
+        logger.info(f"物品創建成功: {result.get('id')}")
+        
         return CreateItemResponse(
             responseCode=201,
             responseMessage="物品創建成功",
-            results=item_response
+            results=result
         )
     except Exception as e:
         logger.error(f"處理物品創建請求時發生錯誤: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         
-        # 使用一個空的 ItemResponse 模型而非 None
-        empty_result = CreateItemResponse(
-            id="",
-            name="",
-            price=0.0,
-            quantity=0
-        )
+        # 返回一個空的字典
+        empty_result = {
+            "id": "",
+            "name": "",
+            "description": None,
+            "price": 0.0,
+            "quantity": 0,
+            "category": None,
+            "tags": None,
+            "properties": None
+        }
         
         return CreateItemResponse(
             responseCode=500,
