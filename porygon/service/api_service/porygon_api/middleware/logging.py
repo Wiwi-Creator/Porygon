@@ -1,102 +1,76 @@
-import logging
-import json
+import time
 import uuid
+import datetime
+import json
+import io
+import logging
+
+from contextlib import redirect_stdout, redirect_stderr
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-import time
+from google.cloud import bigquery
+
+bq_client = bigquery.Client(project='genibuilder')
+table_id = "genibuilder.porygon_api_logs.api_records"
 
 
-class JSONLogFormatter(logging.Formatter):
-    def format(self, record):
-        log_record = {
-            "severity": record.levelname,
-            "message": record.getMessage(),
-            "module": record.module,
-            "function": record.funcName,
-            "line": record.lineno,
-        }
-
-        for key, value in record.__dict__.items():
-            if key not in ['args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
-                           'funcName', 'id', 'levelname', 'levelno', 'lineno', 'module',
-                           'msecs', 'message', 'msg', 'name', 'pathname', 'process',
-                           'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName']:
-                log_record[key] = value
-
-        if record.exc_info:
-            log_record['exception'] = self.formatException(record.exc_info)
-
-        return json.dumps(log_record)
-
-
-def setup_logging():
-    logger = logging.getLogger("porygon_api")
-    logger.setLevel(logging.INFO)
-
-    for handler in logger.handlers[:]:
-        logger.removeHandler(handler)
-
-    handler = logging.StreamHandler()
-    handler.setFormatter(JSONLogFormatter())
-    logger.addHandler(handler)
-
-    return logger
-
-
-class LoggingMiddleware(BaseHTTPMiddleware):
+class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        log_capture = io.StringIO()
         request_id = str(uuid.uuid4())
+        request_time = datetime.datetime.now()
+        create_time = request_time.isoformat()
         start_time = time.time()
 
         path = request.url.path
         method = request.method
-
-        logging.getLogger("porygon_api").info(
-            f"Request started: {method} {path}",
-            extra={
-                "request_id": request_id,
-                "path": path,
-                "method": method,
-                "event_type": "request_start"
-            }
-        )
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent", "unknown")
 
         try:
-            response = await call_next(request)
+            with redirect_stdout(log_capture), redirect_stderr(log_capture):
+                response = await call_next(request)
 
+            response_time = datetime.datetime.now()
             process_time = time.time() - start_time
-
-            logging.getLogger("porygon_api").info(
-                f"Request completed: {method} {path} - {response.status_code}",
-                extra={
-                    "request_id": request_id,
-                    "path": path,
-                    "method": method,
-                    "status_code": response.status_code,
-                    "process_time": process_time,
-                    "event_type": "request_end"
-                }
-            )
-
-            response.headers["X-Request-ID"] = request_id
-            response.headers["X-Process-Time"] = str(process_time)
-
-            return response
+            status_code = response.status_code
+            error = None
 
         except Exception as e:
+            response_time = datetime.datetime.now()
             process_time = time.time() - start_time
-
-            logging.getLogger("porygon_api").error(
-                f"Request failed: {method} {path} - {str(e)}",
-                exc_info=True,
-                extra={
-                    "request_id": request_id,
-                    "path": path,
-                    "method": method,
-                    "error": str(e),
-                    "process_time": process_time,
-                    "event_type": "request_error"
-                }
-            )
-
+            status_code = 500
+            error = str(e)
             raise
+        finally:
+            log_output = log_capture.getvalue()
+            row = {
+                "request_id": request_id,
+                "create_time": create_time,
+                "request_time": request_time.isoformat(),
+                "response_time": response_time.isoformat(),
+                "method": method,
+                "path": path,
+                "status_code": status_code,
+                "latency_ms": process_time * 1000,
+                "client_ip": client_ip,
+                "user_agent": user_agent,
+                "error": error,
+                "log": log_output[:8000],
+                "request_headers": json.dumps(dict(request.headers)),
+                "query_params": json.dumps(dict(request.query_params))
+            }
+
+            try:
+                errors = bq_client.insert_rows_json(table_id, [row])
+                if errors:
+                    print(f"BigQuery insert errors: {errors}")
+                else:
+                    logging.info(f"[BigQuery] ✅ Successfully inserted request {request_id} to {table_id}")
+            except Exception as bq_error:
+                print(f"Failed to insert to BigQuery: {bq_error}")
+
+        if 'response' in locals():
+            response.headers["X-Request-ID"] = request_id
+            response.headers["X-Process-Time"] = str(process_time)
+            return response

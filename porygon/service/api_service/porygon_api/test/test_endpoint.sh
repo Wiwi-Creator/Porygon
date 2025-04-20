@@ -24,3 +24,21 @@ curl -X POST "http://localhost:8080/api/v1/porygon/AIservice/wikipedia_agent"/ \
   -H "Content-Type: application/json" \
   -H "X-API-Key: admin_key" \
   -d '{"query": "Who is the biggest Pokemon?"}'
+
+https://porygon-api-931091704211.asia-east1.run.app/docs
+
+# test on cloud run
+curl -X GET "https://porygon-api-931091704211.asia-east1.run.app:8000/api/v1/porygon/UserQuery/resource/GetItems/bcc4f2ff-1b65-4e28-b2bb-b0475fab73a2" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: admin_key"
+
+
+curl -X GET "https://porygon-api-931091704211.asia-east1.run.app:8000/api/v1/porygon/UserQuery/resource/GetProducts/Product/A123" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: admin_key"
+
+
+curl -X POST "https://porygon-api-931091704211.asia-east1.run.app:8000/api/v1/porygon/AIservice/wikipedia_agent"/ \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: admin_key" \
+  -d '{"query": "Who is the biggest Pokemon?"}'

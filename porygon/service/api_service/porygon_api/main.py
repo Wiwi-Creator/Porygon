@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from porygon_api.model_manager import model_manager
@@ -6,10 +7,11 @@ from porygon_api.app.AIservice.router import router as agent_router
 from porygon_api.app.UserQuery.router import router as userquery_router
 from porygon_api.middleware.auth import AuthMiddleware
 from porygon_api.middleware.http import HttpMiddleware
-from porygon_api.middleware.logging import setup_logging, LoggingMiddleware
+from porygon_api.middleware.logging import BigQueryLoggingMiddleware
 
 
-logger = setup_logging()
+logger = logging.getLogger("porygon_api")
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="Porygon API",
@@ -23,7 +25,7 @@ api_predix = "/api/v1/porygon"
 app.include_router(agent_router, prefix=f"{api_predix}/AIservice")
 app.include_router(userquery_router, prefix=f"{api_predix}/UserQuery")
 
-app.add_middleware(LoggingMiddleware)
+app.add_middleware(BigQueryLoggingMiddleware)
 app.add_middleware(AuthMiddleware)
 app.add_middleware(HttpMiddleware)
 app.add_middleware(
@@ -62,6 +64,7 @@ async def startup_event():
         logger.info("Model is loaded successfully! AI server is ready!")
     else:
         logger.warning("Model loading failed.AI server could not work.")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():

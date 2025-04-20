@@ -1,5 +1,4 @@
 # Porygon API 架構詳解
-
 ## Architecture
 
 Porygon API 是一個基於 FastAPI 的服務，提供 AI 模型預測和資料庫查詢功能。
@@ -24,19 +23,110 @@ flowchart LR
     
     J --> A
 ```
+## API Endpoint
+1. Document UI: https://porygon-api-931091704211.asia-east1.run.app/docs
+
+## Code Architecture
 
 程式碼架構採用分層設計：
-1. **路由層 (Router Layer)**：處理 HTTP 請求路由和參數解析
-2. **服務層 (Service Layer)**：實現業務邏輯和模型交互
-3. **模型層 (Model Layer)**：加載和使用 AI 模型進行預測
-4. **數據層 (Schema Layer)**：定義數據結構和驗證規則
-5. **資料庫層 (Database Layer)**：與 Cloud SQL 和 Firestore 交互
-6. **中間件層 (Middleware Layer)**：處理認證、日誌和請求追蹤
-7. **監控與日誌層 (Monitoring & Logging)**：整合 Cloud Logging 和 BigQuery
+```bash
+porygon_api
+├── app
+│   ├── AIservice
+│   │   ├── dependencies.py
+│   │   ├── router.py
+│   │   ├── schemas.py
+│   │   ├── service.py
+│   │   └── v1
+│   │       ├── __init__.py
+│   │       └── wikipedia_agent.py
+│   ├── UserQuery
+│   │   ├── dependencies.py
+│   │   ├── router.py
+│   │   ├── schemas.py
+│   │   ├── service.py
+│   │   └── v1
+│   │       ├── Item.py
+│   │       ├── __init__.py
+│   ├── __init__.py
+├── database
+│   ├── __init__.py
+│   └── db_connector.py
+├── main.py
+├── middleware
+│   ├── auth.py
+│   ├── http.py
+│   └── logging.py
+├── model_manager.py
+├── schemas.py
+├── security
+│   └── api_key.py -> 用於管理 用戶端的 API key & 角色權限控管
+├──deploy.sh -> 部署腳本
+├──Dockerfile
+├──entry-point.sh -> 啟動 container 初始化腳本
+├──Makefile 
+├──requirement.txt
+├──get_secret.py -> 透過該腳本取得 Google Secret manager 中的所有帳號密碼資訊
+```
+
+## main
+
+## model manager
+`porygon_api/model_manager.py`
+### 主要職責
+
+- 加載和管理 AI 模型
+- 提供模型推理功能
+- 處理模型輸入和輸出格式
+
+### 範例
+
+```python
+class ModelManager:
+    _instance = None
+    _lock = threading.Lock()
+    
+    def _preload_model(self):
+        # 預加載模型
+        self.model = mlflow.pyfunc.load_model(self.model_uri)
+    
+    def predict(self, data):
+        # 使用模型進行預測
+        result = model.predict(data)
+```
+
+模型管控透過 MLflow ，用來作 模型 的 加載、版本管理和監控。
+
+## 中間件層 (Middleware Layer)
+處理認證、日誌和請求追蹤
+`porygon_api/middleware/`
+
+### 主要職責
+
+- 處理 請求前/後的通用邏輯
+- 實現認證和授權功能 (Auth)
+- 記錄請求日誌和監控指標
+
+### 範例
+
+```python
+# auth.py
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # 驗證 API Key
+
+# http.py
+class HttpMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # 記錄請求處理時間和結果
+```
+
+中間件提供跨越多個請求的通用功能，如認證、性能監控等。
 
 ## 路由層 (Router Layer)
-
-位於 `porygon_api/app/AIservice/router.py` 和 `porygon_api/app/UserQuery/router.py`
+處理 HTTP 請求路由和參數解析
+`porygon_api/app/AIservice/router.py`
+`porygon_api/app/UserQuery/router.py`
 
 ### 主要職責
 
@@ -44,7 +134,7 @@ flowchart LR
 - 處理 HTTP Request 和 Respones
 - 向 Client 端提供 接口
 
-### 實現細節
+### 範例
 
 ```python
 # AIservice/router.py
@@ -57,12 +147,12 @@ router.include_router(router=Item.router, prefix="/resource")
 ```
 
 服務分為兩大功能模塊：
-- **AIservice**: 提供基於MLflow中的Model作預測作推理
+- **AIservice**: 提供基於 MLflow 中的Model作預測作推理
 - **UserQuery**: 提供資料庫項目查詢功能
 
-## 2. 服務層 (Service Layer)
-
-Ex:  `porygon_api/app/AIservice/service.py` 和 `porygon_api/app/UserQuery/service.py`
+## 服務層 (Service Layer)
+`porygon_api/app/AIservice/service.py`
+`porygon_api/app/UserQuery/service.py`
 
 ### 職責
 
@@ -70,7 +160,7 @@ Ex:  `porygon_api/app/AIservice/service.py` 和 `porygon_api/app/UserQuery/servi
 - 處理數據轉換和錯誤處理
 - 與資料庫交互
 
-### 程式碼說明
+### 範例
 
 ```python
 # AIservice/service.py
@@ -93,37 +183,10 @@ class ItemService:
 
 服務層採用單例模式，確保系統資源高效利用。
 
-## 3. 模型層 (Model Layer)
+## 結構層 (Schema Layer)
 
-位於 `porygon_api/model_manager.py`
-
-### 主要職責
-
-- 加載和管理 AI 模型
-- 提供模型推理功能
-- 處理模型輸入和輸出格式
-
-### 實現細節
-
-```python
-class ModelManager:
-    _instance = None
-    _lock = threading.Lock()
-    
-    def _preload_model(self):
-        # 預加載模型
-        self.model = mlflow.pyfunc.load_model(self.model_uri)
-    
-    def predict(self, data):
-        # 使用模型進行預測
-        result = model.predict(data)
-```
-
-模型管控透過 MLflow ，用來作 模型 的 加載、版本管理和監控。
-
-## 4. 數據層 (Schema Layer)
-
-位於 `porygon_api/app/AIservice/schemas.py` 和 `porygon_api/app/UserQuery/schemas.py`
+`porygon_api/app/AIservice/schemas.py`
+`porygon_api/app/UserQuery/schemas.py`
 
 ### 職責
 
@@ -131,7 +194,7 @@ class ModelManager:
 - 實現數據驗證邏輯
 - 提供數據序列化和反序列化功能
 
-### 實現細節
+### 範例
 
 ```python
 # AIservice/schemas.py
@@ -147,16 +210,16 @@ class ItemBase(BaseModel):
     description: Optional[str] = Field(None, description="物品描述")
 ```
 
-## 5. 資料庫層 (Database Layer)
-
-位於 `porygon_api/database/db_connector.py`
+## 資料庫層 (Database Layer)
+與 Cloud SQL 和 Firestore 交互
+`porygon_api/database/db_connector.py`
 
 ### 主要職責
 
 - 提供 API & DB 的操作對接
 - 處理 DB Transaction 和 Connection
 
-### 實現細節
+### 範例
 
 ```python
 class CloudSQLConnector:
@@ -179,33 +242,7 @@ class FirestoreConnector:
 - **Cloud SQL**: 用於關係式數據存儲
 - **Firestore**: 用於 NoSQL 文檔存儲
 
-## 6. 中間件層 (Middleware Layer)
-
-位於 `porygon_api/middleware/`
-
-### 主要職責
-
-- 處理 請求前/後的通用邏輯
-- 實現認證和授權功能 (Auth)
-- 記錄請求日誌和監控指標
-
-### 邏輯
-
-```python
-# auth.py
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # 驗證 API Key
-
-# http.py
-class HttpMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # 記錄請求處理時間和結果
-```
-
-中間件提供跨越多個請求的通用功能，如認證、性能監控等。
-
-## 7. 監控與日誌層 (Monitoring & Logging)
+## 監控與日誌層 (Monitoring & Logging)
 
 ### 主要職責
 
@@ -282,11 +319,6 @@ gunicorn porygon_api.main:app \
    - `GCP_PROJECT_ID`: GCP Project ID
    - `MODEL_URI`: MLflow Model URI
    - `MLFLOW_TRACKING_URI`: MLflow Tracking Server URI
-
-## API 端點
-
-### AIservice 端點
-1. Document UI: 
 
 ## 關鍵設計模式
 
@@ -380,6 +412,19 @@ CREATE INDEX idx_items_name ON items(name);
 }
 ```
 
+## Tech Stack
+- Google Cloud Platform
+  - Google Cloud Run
+    - 部署 API 
+  - Cloud SQL: 
+    - 存放使用者查詢的資料表
+    - 紀錄 Mlflow 的 Log 表
+  - Firestore
+  - Cloud Logging
+  - BigQuery
+  - Container Registry: 存放 Image
+- FastAPI
+- MLflow
 ## TO-DO
 ### 擴展方案
 
