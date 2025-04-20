@@ -16,7 +16,7 @@ export AZURE_OPENAI_API_KEY="$(python3 /app/get_secret.py --project="${GCP_PROJE
 export AZURE_OPENAI_ENDPOINT="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=azure_openai_endpoint)"
 export AZURE_OPENAI_DEPLOYMENT_NAME="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=azure_openai_deployment_name)"
 export AZURE_OPENAI_API_VERSION="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=azure_openai_api_version)"
-export SERPAPI_API_KEY="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=serpapi_api_key)"
+
 
 # 獲取 MLflow 相關設定
 if [[ -z "${MLFLOW_TRACKING_URI}" ]]; then
@@ -51,7 +51,8 @@ if [[ -z "${HOST}" ]]; then
 fi
 
 # 顯示服務啟動信息
-echo "Starting Porygon API Service..."
+echo "Starting Porygon API Service on Project: ${GCP_PROJECT}"
+
 echo "MLflow Tracking URI: ${MLFLOW_TRACKING_URI}"
 echo "Model URI: ${MODEL_URI}"
 
