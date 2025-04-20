@@ -125,7 +125,7 @@ class FirestoreConnector:
             return
 
         logger.info("初始化 FirestoreConnector")
-        self.project_id = os.getenv("GCP_PROJECT_ID")
+        self.project_id = os.getenv("GCP_PROJECT_ID", "genibuilder")
         self.client = None
         self._initialized = True
 
@@ -134,43 +134,13 @@ class FirestoreConnector:
         if self.client is None:
             try:
                 logger.info(f"連接到 Firestore: 專案 {self.project_id}")
-                self.client = firestore.Client(project=self.project_id)
+                self.client = firestore.Client(project=self.project_id, database="default")
                 logger.info("Firestore 連接成功")
             except Exception as e:
                 logger.error(f"Firestore 連接失敗: {str(e)}")
                 raise
 
         return self.client
-
-    def add_document(self, collection: str, data: Dict[str, Any], document_id=None):
-        """新增文檔到指定集合"""
-        client = self.connect()
-        try:
-            collection_ref = client.collection(collection)
-            if document_id:
-                doc_ref = collection_ref.document(document_id)
-                doc_ref.set(data)
-                logger.info(f"成功新增文檔 {document_id} 到集合 {collection}")
-                return {"status": "success", "document_id": document_id}
-            else:
-                doc_ref = collection_ref.add(data)[1]
-                logger.info(f"成功新增文檔 {doc_ref.id} 到集合 {collection}")
-                return {"status": "success", "document_id": doc_ref.id}
-        except Exception as e:
-            logger.error(f"Firestore 新增文檔失敗: {str(e)}")
-            return {"status": "error", "message": str(e)}
-
-    def update_document(self, collection: str, document_id: str, data: Dict[str, Any]):
-        """更新指定文檔"""
-        client = self.connect()
-        try:
-            doc_ref = client.collection(collection).document(document_id)
-            doc_ref.update(data)
-            logger.info(f"成功更新文檔 {document_id} 在集合 {collection}")
-            return {"status": "success", "document_id": document_id}
-        except Exception as e:
-            logger.error(f"Firestore 更新文檔失敗: {str(e)}")
-            return {"status": "error", "message": str(e)}
 
 
 # 全局連接器實例
