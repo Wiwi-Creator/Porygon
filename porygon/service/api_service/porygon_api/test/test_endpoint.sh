@@ -25,13 +25,7 @@ curl -X GET \
     }
   }'
 
-curl -X POST "http://localhost:8080/api/v1/porygon/UserQuery/item/" \
+curl -X GET "http://localhost:8080/api/v1/porygon/UserQuery/item/bcc4f2ff-1b65-4e28-b2bb-b0475fab73a2" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: admin_key" \
-  -d '{
-    "name": "簡單測試產品",
-    "description": "這是一個簡單的測試產品",
-    "price": 299.99,
-    "quantity": 5,
-    "category": "測試類別"
-  }'
+  -H "X-API-Key: admin_key"
+
