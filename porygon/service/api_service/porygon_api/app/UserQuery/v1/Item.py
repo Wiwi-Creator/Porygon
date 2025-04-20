@@ -56,7 +56,7 @@ async def get_item(
         )
 
 
-@router.get("/GetProducts/{collection}/{document_id}", response_model=FirestoreItemResponse)
+@router.get("/GetProducts/{collection}/{product_id}", response_model=FirestoreItemResponse)
 async def get_firestore_item(
     collection: str,
     product_id: str,

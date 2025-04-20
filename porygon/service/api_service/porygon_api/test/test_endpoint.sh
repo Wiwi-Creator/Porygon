@@ -15,7 +15,12 @@ curl -X GET "http://localhost:8080/api/v1/porygon/UserQuery/resource/GetItems/bc
   -H "X-API-Key: admin_key"
 
 
-curl -X GET "http://localhost:8080/api/v1/porygon/UserQuery/resource/GetProducts/product/A123" \
+curl -X GET "http://localhost:8080/api/v1/porygon/UserQuery/resource/GetProducts/Product/A123" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: admin_key"
 
+
+curl -X POST "http://localhost:8080/api/v1/porygon/AIservice/wikipedia_agent"/ \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: admin_key" \
+  -d '{"query": "Who is the biggest Pokemon?"}'
