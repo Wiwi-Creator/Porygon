@@ -81,6 +81,70 @@ class ItemService:
                 "category": None
             }
 
+    async def update_item(self, item_id: str, item: ItemBase) -> Dict[str, Any]:
+        """更新 Cloud SQL 中的物品
+
+        Args:
+            item_id: 物品 ID
+            item: 更新的物品資料
+
+        Returns:
+            包含操作結果的字典
+        """
+        try:
+            # 使用命名參數的 SQL 查詢
+            query = """
+            UPDATE items
+            SET name = :name, 
+                description = :description, 
+                price = :price, 
+                quantity = :quantity, 
+                category = :category
+            WHERE id = :id
+            RETURNING id, name, description, price, quantity, category
+            """
+
+            # 參數字典
+            params = {
+                "id": item_id,
+                "name": item.name,
+                "description": item.description,
+                "price": item.price,
+                "quantity": item.quantity,
+                "category": item.category
+            }
+
+            logger.info(f"準備更新 Cloud SQL 中的物品: {item_id}")
+            result = cloud_sql_connector.execute_query(query, params)
+
+            if result["status"] == "success" and "data" in result and result["data"]:
+                updated_item = result["data"][0]
+                logger.info(f"物品更新成功: {item_id}")
+                return updated_item
+            else:
+                logger.error(f"物品更新失敗: {result.get('message', '未知錯誤')}")
+                return {
+                    "id": "",
+                    "name": "",
+                    "description": None,
+                    "price": 0.0,
+                    "quantity": 0,
+                    "category": None
+                }
+
+        except Exception as e:
+            logger.error(f"更新物品時發生錯誤: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return {
+                "id": "",
+                "name": "",
+                "description": None,
+                "price": 0.0,
+                "quantity": 0,
+                "category": None
+            }
+
     async def create_firestore_item(self, request: FirestoreItemRequest) -> Dict[str, Any]:
         """在 Firestore 中創建新物品
 
@@ -119,9 +183,8 @@ class ItemService:
             import traceback
             logger.error(traceback.format_exc())
             return {"status": "error", "message": str(e)}
-    
-    async def update_firestore_item(self, collection: str, document_id: str, 
-                                   data: Dict[str, Any]) -> Dict[str, Any]:
+
+    async def update_firestore_item(self, collection: str, document_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """更新 Firestore 中的物品
 
         Args:
