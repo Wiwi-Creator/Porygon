@@ -27,7 +27,7 @@ class ModelManager:
     def __init__(self):
         if self._initialized:
             return
-
+        mlflow.langchain.autolog()
         logger.info("Initialize ModelManager.")
         self.model = None
         self.model_uri = os.getenv("MODEL_URI", "gs://wiwi-bucket/1/15a6b7e29ad34d3fa1484ee9e0621774/artifacts/porygon_chain")
@@ -54,12 +54,7 @@ class ModelManager:
 
             EXPERIMENT_NAME = "AI_Service_Experiment"
             experiment_info = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
-            if experiment_info:
-                experiment_id=experiment_info.experiment_id
-                mlflow.set_experiment(experiment_id=experiment_id)
-            else:
-                experiment_id = mlflow.create_experiment(EXPERIMENT_NAME)
-            mlflow.set_experiment(experiment_id=experiment_id)
+            mlflow.set_experiment(experiment_id=experiment_info.experiment_id)
             logger.info(f"Setting MLflow Experiment name: {EXPERIMENT_NAME}")
 
             client = MlflowClient()
@@ -122,8 +117,9 @@ class ModelManager:
             logger.info(f"Model Predict, Input data: {data}")
             tags = {'Knowledge': 'Pokemon', 'Type': 'Wikipedia', 'Model': 'Grok-2-1212'}
             with mlflow.start_run(run_name="porygon-wikipedia-agent", tags=tags):
+                mlflow.log_param("model_uri", self.model_uri)
                 result = model.predict(data)
-                logger.info(f"Predict completed, result: {type(result)}")
+                logger.info(f"Predict completed, result: {result}")
                 return result
         except Exception as e:
             logger.error(f"Prediction error: {str(e)}")

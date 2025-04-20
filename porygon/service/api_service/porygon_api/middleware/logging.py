@@ -27,8 +27,30 @@ class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
         user_agent = request.headers.get("user-agent", "unknown")
 
         try:
+            request_body = await request.body()
+            request_body_str = request_body.decode("utf-8")
+
+            async def receive():
+                return {"type": "http.request", "body": request_body}
+
+            request._receive = receive
+
             with redirect_stdout(log_capture), redirect_stderr(log_capture):
                 response = await call_next(request)
+
+                response_body = b""
+                async for chunk in response.body_iterator:
+                    response_body += chunk
+
+                response_body_str = response_body.decode("utf-8")
+
+                from starlette.responses import Response
+                response = Response(
+                    content=response_body,
+                    status_code=response.status_code,
+                    headers=dict(response.headers),
+                    media_type=response.media_type
+                )
 
             response_time = datetime.datetime.now()
             process_time = time.time() - start_time
@@ -40,12 +62,18 @@ class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
             process_time = time.time() - start_time
             status_code = 500
             error = str(e)
-            logging.exception(f"[Middleware] ❗ Exception occurred during request {request_id}")
+            request_body_str = request_body_str if "request_body_str" in locals() else ""
+            response_body_str = ""
+            logging.exception(f"[Middleware] Exception during request {request_id}")
             raise
+
         finally:
             log_output = log_capture.getvalue()
+
             row = {
                 "request_id": request_id,
+                "request_body": request_body_str[:8000],
+                "response_body": response_body_str[:8000],
                 "create_time": create_time,
                 "request_time": request_time.isoformat(),
                 "response_time": response_time.isoformat(),
@@ -66,11 +94,10 @@ class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
                 if errors:
                     logging.error(f"[BigQuery] Insert errors for request {request_id}: {errors}")
                 else:
-                    logging.info(f"[BigQuery] Successfully inserted request {request_id} to {table_id}")
+                    logging.info(f"[BigQuery] Logged request {request_id} to {table_id}")
             except Exception:
-                logging.exception(f"[BigQuery]Failed to insert request {request_id}")
+                logging.exception(f"[BigQuery] Failed to insert request {request_id}")
 
-        if 'response' in locals():
-            response.headers["X-Request-ID"] = request_id
-            response.headers["X-Process-Time"] = str(process_time)
-            return response
+        response.headers["X-Request-ID"] = request_id
+        response.headers["X-Process-Time"] = str(process_time)
+        return response

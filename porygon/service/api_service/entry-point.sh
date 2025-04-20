@@ -12,19 +12,14 @@ fi
 export XAI_API_KEY="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=xai_api_key)"
 export XAI_DEPLOYMENT_NAME="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=xai_deployment_name)"
 export XAI_ENDPOINT="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=xai_endpoint)"
-export AZURE_OPENAI_API_KEY="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=azure_openai_api_key)"
-export AZURE_OPENAI_ENDPOINT="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=azure_openai_endpoint)"
-export AZURE_OPENAI_DEPLOYMENT_NAME="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=azure_openai_deployment_name)"
-export AZURE_OPENAI_API_VERSION="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=azure_openai_api_version)"
-
 
 # 獲取 MLflow 相關設定
 if [[ -z "${MLFLOW_TRACKING_URI}" ]]; then
-    export MLFLOW_TRACKING_URI="$(python3 /app/get_secret.py --project="${GCP_PROJECT}" --secret=mlflow_tracking_uri)"
+    export MLFLOW_TRACKING_URI="${MLFLOW_TRACKING_URI}"
 fi
 
 if [[ -z "${MLFLOW_REGISTRY_URI}" ]]; then
-    export MLFLOW_REGISTRY_URI="${MLFLOW_TRACKING_URI}"
+    export MLFLOW_REGISTRY_URI="${MLFLOW_REGISTRY_URI}"
 fi
 
 if [[ -z "${MODEL_URI}" ]]; then
