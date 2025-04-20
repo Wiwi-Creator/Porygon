@@ -4,7 +4,6 @@ import datetime
 import json
 import io
 import logging
-
 from contextlib import redirect_stdout, redirect_stderr
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -41,6 +40,7 @@ class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
             process_time = time.time() - start_time
             status_code = 500
             error = str(e)
+            logging.exception(f"[Middleware] ❗ Exception occurred during request {request_id}")
             raise
         finally:
             log_output = log_capture.getvalue()
@@ -64,11 +64,11 @@ class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
             try:
                 errors = bq_client.insert_rows_json(table_id, [row])
                 if errors:
-                    print(f"BigQuery insert errors: {errors}")
+                    logging.error(f"[BigQuery] Insert errors for request {request_id}: {errors}")
                 else:
-                    logging.info(f"[BigQuery] ✅ Successfully inserted request {request_id} to {table_id}")
-            except Exception as bq_error:
-                print(f"Failed to insert to BigQuery: {bq_error}")
+                    logging.info(f"[BigQuery] Successfully inserted request {request_id} to {table_id}")
+            except Exception:
+                logging.exception(f"[BigQuery]Failed to insert request {request_id}")
 
         if 'response' in locals():
             response.headers["X-Request-ID"] = request_id
