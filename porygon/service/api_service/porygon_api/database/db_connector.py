@@ -37,7 +37,6 @@ class CloudSQLConnector:
             try:
                 logger.info(f"連接到 Cloud SQL: {self.db_host}:{self.db_port}/{self.db_name}")
 
-                # 建立 SQLAlchemy engine
                 self.engine = sqlalchemy.create_engine(
                     sqlalchemy.engine.url.URL.create(
                         drivername="postgresql+pg8000",
@@ -53,7 +52,7 @@ class CloudSQLConnector:
                     pool_recycle=1800,
                 )
 
-                # 測試連接
+                # Test Connection
                 with self.engine.connect() as conn:
                     conn.execute(sqlalchemy.text("SELECT 1"))
 
@@ -64,39 +63,39 @@ class CloudSQLConnector:
 
         return self.engine
 
-    def execute_query(self, query: str, params=None) -> Dict[str, Any]:
-        """執行 SQL 查詢並返回結果"""
-        engine = self.connect()
+    def execute_query(self, query, params=None):
+        """執行 SQL 查詢並返回結果
 
+        Args:
+            query: SQL 查詢字符串
+            params: 查詢參數 (可選)
+
+        Returns:
+            包含操作結果的字典
+        """
         try:
-            with engine.connect() as connection:
-                # 將 PostgreSQL 風格的 %s 參數轉換為 SQLAlchemy 的 :param 風格
-                if '%s' in query and isinstance(params, tuple):
-                    # 創建 SQL 文本對象
-                    sql = sqlalchemy.text(query.replace('%s', ':param'))
+            # 確保引擎已連接
+            engine = self.connect()
 
-                    # 創建參數字典
-                    param_dict = {}
-                    for i, value in enumerate(params):
-                        param_dict[f'param{i+1}'] = value
+            # 將查詢字符串轉換為 SQLAlchemy text 對象
+            sql = sqlalchemy.text(query)
 
-                    # 執行查詢
-                    result = connection.execute(sql, param_dict)
+            with engine.connect() as conn:
+                if params:
+                    result = conn.execute(sql, params)
                 else:
-                    # 直接執行查詢 (如果已經使用了 SQLAlchemy 風格的參數)
-                    sql = sqlalchemy.text(query)
-                    result = connection.execute(sql, params if params else {})
+                    result = conn.execute(sql)
 
-                # 處理結果
-                if query.strip().upper().startswith(('SELECT', 'SHOW', 'RETURNING')):
+                conn.commit()
+
+                if result.returns_rows:
                     rows = []
                     for row in result:
-                        row_dict = {key: value for key, value in row._mapping.items()}
-                        rows.append(row_dict)
+                        rows.append({key: value for key, value in row._mapping.items()})
                     return {"status": "success", "data": rows}
                 else:
-                    connection.commit()
                     return {"status": "success", "rows_affected": result.rowcount}
+
         except Exception as e:
             logger.error(f"SQL 查詢執行失敗: {str(e)}")
             import traceback

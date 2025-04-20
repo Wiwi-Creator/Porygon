@@ -28,42 +28,37 @@ class ItemService:
         self._initialized = True
 
     async def create_item(self, item: ItemBase) -> Dict[str, Any]:
-        """在 Cloud SQL 中創建新物品
-        Args:
-            item: 物品資料
-        Returns:
-            包含操作結果的字典
-        """
+        """在 Cloud SQL 中創建新物品"""
         try:
             # 生成唯一 ID
             item_id = str(uuid.uuid4())
-    
-            # 使用簡化的查詢，不包含 tags 和 properties
+
+            # 使用命名參數的 SQL 查詢
             query = """
             INSERT INTO items (id, name, description, price, quantity, category)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (:id, :name, :description, :price, :quantity, :category)
             RETURNING id, name, description, price, quantity, category
             """
-    
-            params = (
-                item_id,
-                item.name,
-                item.description,
-                item.price,
-                item.quantity,
-                item.category
-            )
-    
+
+            # 參數字典
+            params = {
+                "id": item_id,
+                "name": item.name,
+                "description": item.description,
+                "price": item.price,
+                "quantity": item.quantity,
+                "category": item.category
+            }
+
             logger.info(f"準備在 Cloud SQL 中創建物品: {item.name}")
             result = cloud_sql_connector.execute_query(query, params)
-    
+
             if result["status"] == "success" and "data" in result:
                 created_item = result["data"][0] if result["data"] else None
                 logger.info(f"物品創建成功: {item_id}")
                 return created_item
             else:
                 logger.error(f"物品創建失敗: {result.get('message', '未知錯誤')}")
-                # 返回一個空的物品字典，而不是 None
                 return {
                     "id": "",
                     "name": "",
@@ -72,12 +67,11 @@ class ItemService:
                     "quantity": 0,
                     "category": None
                 }
-    
+
         except Exception as e:
             logger.error(f"創建物品時發生錯誤: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            # 返回一個空的物品字典，而不是 None
             return {
                 "id": "",
                 "name": "",
