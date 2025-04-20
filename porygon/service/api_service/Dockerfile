@@ -13,6 +13,8 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 ENV PYTHONPATH="${PYTHONPATH}:/app"
+ENV MLFLOW_TRACKING_INSECURE_TLS=true
+ENV PYTHONHTTPSVERIFY=0
 
 COPY entry-point.sh /app/entry-point.sh
 RUN chmod +x /app/entry-point.sh

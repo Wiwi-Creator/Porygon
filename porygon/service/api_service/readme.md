@@ -259,32 +259,20 @@ class FirestoreConnector:
 - **line**: 代碼行號
 - **message**: 日誌信息
 
-### Cloud Logging 整合
+### Cloud Logging 整合到 Bigquery
 
-應用自動將日誌發送到 Google Cloud Logging，無需額外配置。當部署到 Cloud Run 時，標準輸出會被自動收集。
+應用自動將日誌發送到 Google Cloud Logging當部署到 Cloud Run 時，標準輸出會被自動收集。
+可以檢視許多 Event log。
 
 ### BigQuery 整合
 
-設置 Log Sink 將日誌從 Cloud Logging 導出到 BigQuery，實現以下功能：
-- 長期日誌存儲
-- 複雜查詢分析
-- 性能監控和異常檢測
+1.設置 Log Sink 將日誌從 Cloud Logging 導出到 BigQuery
+2.logging.py : 額外將需要的資訊寫入 BigQuery
 
 ### 示例查詢
 
 ```sql
-SELECT
-  JSON_EXTRACT_SCALAR(jsonPayload, '$.path') AS endpoint,
-  COUNT(*) AS request_count,
-  AVG(CAST(JSON_EXTRACT_SCALAR(jsonPayload, '$.process_time') AS FLOAT64)) AS avg_time
-FROM
-  `project_id.dataset.table`
-WHERE
-  timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
-GROUP BY
-  endpoint
-ORDER BY
-  avg_time DESC;
+SELECT * FROM `genibuilder.porygon_api_logs.api_records` ; 
 ```
 
 ## Deplyment
@@ -325,22 +313,14 @@ gunicorn porygon_api.main:app \
 1. **單例模式**: 確保服務和連接器只被實例化一次
 2. **依賴注入**: 通過 FastAPI 的依賴系統提供服務實例
 3. **Middleware**: 通過中間件鏈處理請求的通用邏輯
-4. **Preload 策略**: 在服務啟動時預加載模型，提高性能
-5. **日誌集中化**: 將所有日誌集中到 Cloud Logging 和 BigQuery
+4. **Preload 策略**: 在服務啟動時 Preload model，提高性能
+5. **日誌集中化**: 將所有日誌集中到 Cloud Logging & BigQuery
 
 ## 安全性
 
 - **API 密鑰認證**: 使用 X-API-Key head 進行認證
 - **基於角色的訪問控制**: 不同角色擁有不同的端點訪問權限
 - **請求 ID 追蹤**: 每個請求分配唯一 ID 用於跟踪和審計
-
-## 日誌與監控最佳實踐
-
-1. **結構化日誌**: 使用 JSON 格式確保日誌可以被有效解析和查詢
-2. **包含上下文**: 在日誌中包含request ID、Client ID ..etc
-3. **性能指標**: 記錄請求處理時間等性能指標
-4. **集中分析**: 將 Log 導出到 BigQuery 進行分析
-5. **設置警報**: 基於日誌數據設置異常Alert
 
 ## HTTP Status Code
 
@@ -372,24 +352,44 @@ gunicorn porygon_api.main:app \
 
 Porygon API 使用兩種資料庫系統：Cloud SQL (PostgreSQL) 用於關係型數據和 Firestore 用於文檔型數據。
 
+### BigQuery
+
+```sql
+CREATE TABLE `genibuilder.porygon_api_logs.api_records` (
+  request_id STRING,
+  request_body STRING,
+  response_body STRING,
+  create_time TIMESTAMP,
+  request_time TIMESTAMP,
+  response_time TIMESTAMP,
+  method STRING,
+  path STRING,
+  status_code INT64,
+  latency_ms FLOAT64,
+  client_ip STRING,
+  user_agent STRING,
+  error STRING,
+  log STRING,
+  request_headers STRING,
+  query_params STRING
+);
+```
+
 ### Cloud SQL Schema
 
 #### Table: items 
 ```sql
-CREATE TABLE items (
-    id VARCHAR(50) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS items (
+    id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    price DECIMAL(10, 2) NOT NULL,
-    quantity INTEGER NOT NULL DEFAULT 0,
-    category VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+    price FLOAT NOT NULL,
+    quantity INTEGER NOT NULL,
+    category VARCHAR(255)
+)
 ```
 -- Index
-CREATE INDEX idx_items_category ON items(category);
-CREATE INDEX idx_items_name ON items(name);
+CREATE INDEX idx_items_id ON items(id);
 
 ### FireStore
 
@@ -398,33 +398,30 @@ CREATE INDEX idx_items_name ON items(name);
 {
   "Product_id": "string",  // 產品唯一標識符 (用於查詢)
   "name": "string",        // 產品名稱
-  "description": "string", // 產品描述
   "price": "number",       // 產品價格
-  "quantity": "number",    // 庫存數量
-  "category": "string",    // 產品類別
-  "properties": {          // 產品特性 (可選)
-    "key1": "value1",
-    "key2": "value2"
-  },
-  "tags": ["string"],      // 產品標籤 (可選)
-  "created_at": "timestamp", // 創建時間
-  "updated_at": "timestamp"  // 更新時間
+  "location": "string",    // 地點
 }
 ```
 
 ## Tech Stack
 - Google Cloud Platform
   - Google Cloud Run
-    - 部署 API 
-  - Cloud SQL: 
-    - 存放使用者查詢的資料表
+    - 部署 FastAPI 
+    - 部署 MLflow
+  - Cloud SQL(Postgres DB)
+    - 存放使用者查詢的資料表(Item)
     - 紀錄 Mlflow 的 Log 表
   - Firestore
+    - 存放使用者查詢的資料表(Product)
   - Cloud Logging
+    - Cloud run event log
   - BigQuery
+    - API log
   - Container Registry: 存放 Image
 - FastAPI
 - MLflow
+  - Model Version control
+  - Model predict history
 ## TO-DO
 ### 擴展方案
 
@@ -438,5 +435,5 @@ CREATE INDEX idx_items_name ON items(name);
 3. **程式優化**:
     - CICD
     - 將 Cloud SQL & Firestore 邏輯分開
-    - AI Model Preload
+    - AI Service -> 微服務化 , 不應該在 FastAPI 上作 Predict
     - 高併發測試 (Ex: 透過 Mulit-thread 短時間內高併發測試 API 負載)

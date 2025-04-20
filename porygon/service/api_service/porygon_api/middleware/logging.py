@@ -26,54 +26,76 @@ class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
         client_ip = request.client.host if request.client else "unknown"
         user_agent = request.headers.get("user-agent", "unknown")
 
+        request_body_str = ""
+        response_body_str = ""
+        status_code = 500
+        error = None
+        response = None
+
         try:
             request_body = await request.body()
             request_body_str = request_body.decode("utf-8")
 
             async def receive():
                 return {"type": "http.request", "body": request_body}
-
             request._receive = receive
 
             with redirect_stdout(log_capture), redirect_stderr(log_capture):
-                response = await call_next(request)
+                try:
+                    response = await call_next(request)
+                    response_body = b""
+                    async for chunk in response.body_iterator:
+                        response_body += chunk
+                    response_body_str = response_body.decode("utf-8")
+                    from starlette.responses import Response
+                    response = Response(
+                        content=response_body,
+                        status_code=response.status_code,
+                        headers=dict(response.headers),
+                        media_type=response.media_type
+                    )
 
-                response_body = b""
-                async for chunk in response.body_iterator:
-                    response_body += chunk
-
-                response_body_str = response_body.decode("utf-8")
-
-                from starlette.responses import Response
-                response = Response(
-                    content=response_body,
-                    status_code=response.status_code,
-                    headers=dict(response.headers),
-                    media_type=response.media_type
-                )
-
-            response_time = datetime.datetime.now()
-            process_time = time.time() - start_time
-            status_code = response.status_code
-            error = None
+                    status_code = response.status_code
+                except Exception as inner_e:
+                    error = str(inner_e)
+                    logging.exception(f"[Middleware] Inner exception during request {request_id}")
+                    from starlette.responses import JSONResponse
+                    response = JSONResponse(
+                        status_code=500,
+                        content={"detail": "Internal Server Error", "error": str(inner_e)}
+                    )
+                    status_code = 500
 
         except Exception as e:
-            response_time = datetime.datetime.now()
-            process_time = time.time() - start_time
-            status_code = 500
             error = str(e)
-            request_body_str = request_body_str if "request_body_str" in locals() else ""
-            response_body_str = ""
-            logging.exception(f"[Middleware] Exception during request {request_id}")
-            raise
+            logging.exception(f"[Middleware] Outer exception during request {request_id}")
+            from starlette.responses import JSONResponse
+            response = JSONResponse(
+                status_code=500,
+                content={"detail": "Middleware Error", "error": str(e)}
+            )
+            status_code = 500
 
         finally:
+            response_time = datetime.datetime.now()
+            process_time = time.time() - start_time
             log_output = log_capture.getvalue()
+
+            if status_code != 200:
+                error_messages = {
+                    400: "Bad Request",
+                    401: "Unauthorized",
+                    403: "Forbidden",
+                    404: "Endpoint Not Found",
+                    405: "Method Not Allowed",
+                    500: "Internal Server Error"
+                }
+                error = error_messages.get(status_code, f"HTTP Error: {status_code}")
 
             row = {
                 "request_id": request_id,
-                "request_body": request_body_str[:8000],
-                "response_body": response_body_str[:8000],
+                "request_body": request_body_str[:8000] if request_body_str else "",
+                "response_body": response_body_str[:8000] if response_body_str else "",
                 "create_time": create_time,
                 "request_time": request_time.isoformat(),
                 "response_time": response_time.isoformat(),
@@ -95,9 +117,17 @@ class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
                     logging.error(f"[BigQuery] Insert errors for request {request_id}: {errors}")
                 else:
                     logging.info(f"[BigQuery] Logged request {request_id} to {table_id}")
-            except Exception:
-                logging.exception(f"[BigQuery] Failed to insert request {request_id}")
+            except Exception as bq_error:
+                logging.exception(f"[BigQuery] Failed to insert request {request_id}: {str(bq_error)}")
 
-        response.headers["X-Request-ID"] = request_id
-        response.headers["X-Process-Time"] = str(process_time)
-        return response
+            if response:
+                response.headers["X-Request-ID"] = request_id
+                response.headers["X-Process-Time"] = str(process_time)
+                return response
+            else:
+                from starlette.responses import JSONResponse
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": "No response generated", "request_id": request_id},
+                    headers={"X-Request-ID": request_id, "X-Process-Time": str(process_time)}
+                )

@@ -21,6 +21,7 @@ SERVICE_ACCOUNT="931091704211-compute@developer.gserviceaccount.com"
 ### -------- DEPLOY TO CLOUD RUN --------
 echo "Deploying Porygon API to Cloud Run..."
 
+# 在 deploy.sh 中添加環境變數
 gcloud run deploy "$SERVICE_NAME" \
   --project="$PROJECT_ID" \
   --image="$IMAGE" \
@@ -31,5 +32,5 @@ gcloud run deploy "$SERVICE_NAME" \
   --memory="$MEMORY" \
   --cpu="$CPU" \
   --timeout=300 \
-  --set-env-vars="GCP_PROJECT=$PROJECT_ID,PYTHONPATH=/app,MODEL_URI=$MODEL_URI,MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI,MLFLOW_REGISTRY_URI=$MLFLOW_REGISTRY_URI" \
+  --set-env-vars="GCP_PROJECT=$PROJECT_ID,PYTHONPATH=/app,MODEL_URI=$MODEL_URI,MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI,MLFLOW_REGISTRY_URI=$MLFLOW_REGISTRY_URI,MLFLOW_TRACKING_INSECURE_TLS=true,PYTHONHTTPSVERIFY=0" \
   --service-account=$SERVICE_ACCOUNT
