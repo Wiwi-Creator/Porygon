@@ -20,13 +20,6 @@ async def create_item(
 ):
     """
     在 Cloud SQL 中創建新物品
-
-    Args:
-        request: 物品創建請求
-        item_service: 物品服務依賴注入
-
-    Returns:
-        創建響應，包含新物品信息
     """
     try:
         logger.info(f"收到創建物品請求: {request.name}")
@@ -34,28 +27,55 @@ async def create_item(
 
         if not result:
             logger.error("物品創建失敗")
+            # 使用一個空的 ItemResponse 模型而非 None
+            empty_result = CreateItemResponse(
+                id="",
+                name="",
+                price=0.0,
+                quantity=0
+            )
             return CreateItemResponse(
                 responseCode=500,
                 responseMessage="物品創建失敗",
-                results=None
+                results=empty_result
             )
 
-        logger.info(f"物品創建成功: {result['id']}")
+        logger.info(f"物品創建成功: {result.get('id', '')}")
+        
+        # 確保結果字典結構與 ItemResponse 模型一致
+        item_response = CreateItemResponse(
+            id=result.get('id', ''),
+            name=result.get('name', ''),
+            description=result.get('description'),
+            price=result.get('price', 0.0),
+            quantity=result.get('quantity', 0),
+            category=result.get('category'),
+            tags=result.get('tags'),
+            properties=result.get('properties')
+        )
 
         return CreateItemResponse(
             responseCode=201,
             responseMessage="物品創建成功",
-            results=result
+            results=item_response
         )
     except Exception as e:
         logger.error(f"處理物品創建請求時發生錯誤: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
-
+        
+        # 使用一個空的 ItemResponse 模型而非 None
+        empty_result = CreateItemResponse(
+            id="",
+            name="",
+            price=0.0,
+            quantity=0
+        )
+        
         return CreateItemResponse(
             responseCode=500,
             responseMessage=f"處理失敗: {str(e)}",
-            results=None
+            results=empty_result
         )
 
 

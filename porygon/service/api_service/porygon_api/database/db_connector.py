@@ -70,29 +70,37 @@ class CloudSQLConnector:
 
         try:
             with engine.connect() as connection:
-                # 轉換為 SQLAlchemy text 對象
-                sql_text = sqlalchemy.text(query)
+                # 將 PostgreSQL 風格的 %s 參數轉換為 SQLAlchemy 的 :param 風格
+                if '%s' in query and isinstance(params, tuple):
+                    # 創建 SQL 文本對象
+                    sql = sqlalchemy.text(query.replace('%s', ':param'))
 
-                # 執行查詢
-                if params:
-                    result = connection.execute(sql_text, params)
+                    # 創建參數字典
+                    param_dict = {}
+                    for i, value in enumerate(params):
+                        param_dict[f'param{i+1}'] = value
+
+                    # 執行查詢
+                    result = connection.execute(sql, param_dict)
                 else:
-                    result = connection.execute(sql_text)
+                    # 直接執行查詢 (如果已經使用了 SQLAlchemy 風格的參數)
+                    sql = sqlalchemy.text(query)
+                    result = connection.execute(sql, params if params else {})
 
-                if query.strip().upper().startswith(('SELECT', 'SHOW')):
-                    # 獲取結果
+                # 處理結果
+                if query.strip().upper().startswith(('SELECT', 'SHOW', 'RETURNING')):
                     rows = []
                     for row in result:
-                        # 將 row 轉換為字典
                         row_dict = {key: value for key, value in row._mapping.items()}
                         rows.append(row_dict)
                     return {"status": "success", "data": rows}
                 else:
-                    # 對於非查詢語句，提交事務
                     connection.commit()
                     return {"status": "success", "rows_affected": result.rowcount}
         except Exception as e:
             logger.error(f"SQL 查詢執行失敗: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return {"status": "error", "message": str(e)}
 
     def close(self):

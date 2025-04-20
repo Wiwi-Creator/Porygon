@@ -6,4 +6,4 @@ gunicorn porygon_api.main:app \
   --timeout 120 \
   --keep-alive 120
 
-  lsof -i :8080 
+  lsof -i :8080
