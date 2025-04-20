@@ -43,8 +43,7 @@ if [[ -z "${MODEL_URI}" ]]; then
 fi
 
 if [[ -z "${PORT}" ]]; then
-    export PORT=8080
-fi
+    export PORT=8000
 
 if [[ -z "${HOST}" ]]; then
     export HOST=0.0.0.0

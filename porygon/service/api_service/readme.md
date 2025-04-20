@@ -2,77 +2,78 @@
 
 ## Architecture
 
-1. **路由層 (Router Layer)**：處理 HTTP request router 和 參數解析
-2. **服務層 (Service Layer)**：實現 業務邏輯和模型交互
+Porygon API 是一個基於 FastAPI 的服務，提供 AI 模型預測和資料庫查詢功能。架構採用清晰的分層設計：
+
+1. **路由層 (Router Layer)**：處理 HTTP 請求路由和參數解析
+2. **服務層 (Service Layer)**：實現業務邏輯和模型交互
 3. **模型層 (Model Layer)**：加載和使用 AI 模型進行預測
 4. **數據層 (Schema Layer)**：定義數據結構和驗證規則
-5. **工具層 (Utils Layer)**：提供通用功能和工具方法
+5. **資料庫層 (Database Layer)**：與 Cloud SQL 和 Firestore 交互
+6. **中間件層 (Middleware Layer)**：處理認證、日誌和請求追蹤
+7. **監控與日誌層 (Monitoring & Logging)**：整合 Cloud Logging 和 BigQuery
 
-## 1. 路由層 (Router Layer)
+## 路由層 (Router Layer)
 
-位於 `porygon_api/app/agent/router.py` 和 `porygon_api/app/agent/v1/wikipedia_agent.py`
+位於 `porygon_api/app/AIservice/router.py` 和 `porygon_api/app/UserQuery/router.py`
 
 ### 主要職責
 
-- 定義 API 端點和路由
-- 處理 HTTP 請求和響應
-- 向客戶端提供清晰的接口
+- 定義 API Endpoint 和 Router
+- 處理 HTTP Request 和 Respones
+- 向 Client 端提供 接口
 
 ### 實現細節
 
 ```python
-# router.py
+# AIservice/router.py
 router = APIRouter()
-router.include_router(router=wikipedia_agent.router, prefix="/wikipedia", tags=["Wikipedia Agent"])
+router.include_router(router=wikipedia_agent.router, prefix="/wikipedia_agent")
 
-# wikipedia_agent.py - Your endpoint
-@router.post("/", response_model=QueryResponse)
-async def query_knowledge_base(
-    request: QueryRequest,
-    ai_service: AIService = Depends(get_ai_service)
-):
+# UserQuery/router.py
+router = APIRouter()
+router.include_router(router=Item.router, prefix="/resource")
 ```
 
-路由層依賴注入服務層的實例，通過 FastAPI 的依賴注入系統獲取 `AIService` 的實例。
+服務分為兩大功能模塊：
+- **AIservice**: 提供基於MLflow中的Model作預測作推理
+- **UserQuery**: 提供資料庫項目查詢功能
 
 ## 2. 服務層 (Service Layer)
 
-位於 `porygon_api/app/agent/service.py` 和 `porygon_api/app/agent/dependencies.py`
+Ex:  `porygon_api/app/AIservice/service.py` 和 `porygon_api/app/UserQuery/service.py`
 
-### 主要職責
+### 職責
 
-- 實現業務邏輯
-- 管理模型的加載和使用
+- 實現 主要的業務邏輯
 - 處理數據轉換和錯誤處理
+- 與資料庫交互
 
-### 實現細節
+### 程式碼說明
 
 ```python
-# service.py - 實現 AI 服務邏輯
+# AIservice/service.py
 class AIService:
     _instance = None  # 單例模式
-    _model = None     # 共享模型實例
-    
-    def __new__(cls):
-        # 單例模式實現，確保只有一個服務實例
-        # 預加載模型
-    
-    async def predict(self, request: QueryRequest):
-        # 使用模型進行預測，處理結果
 
-# dependencies.py - 提供依賴注入
-def get_ai_service():
-    global _rag_service
-    if _rag_service is None:
-        _rag_service = AIService()
-    return _rag_service
+    async def predict(self, request: QueryRequest) -> List[PredictResponse]:
+        # 使用模型進行預測
+
+# UserQuery/service.py
+class ItemService:
+    _instance = None
+
+    async def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
+        # 從 Cloud SQL 查詢 Item
+
+    async def get_product(self, collection: str, product_id: str) -> Dict[str, Any]:
+        # 從 Firestore 查詢 Product
 ```
 
-服務層採用單例模式，確保整個應用中只有一個服務實例，避免重複加載模型。同時在服務初始化時預加載模型，提高首次請求的響應速度。
+服務層採用單例模式，確保系統資源高效利用。
 
 ## 3. 模型層 (Model Layer)
 
-模型層不是顯式的代碼層，而是通過 MLflow 集成實現的。
+位於 `porygon_api/model_manager.py`
 
 ### 主要職責
 
@@ -83,23 +84,26 @@ def get_ai_service():
 ### 實現細節
 
 ```python
-# 在 service.py 中加載模型
-def _load_model_internal(self):
-    if AIService._model is None:
-        login_mlflow()  # 設置 MLflow 配置
-        AIService._model = mlflow.pyfunc.load_model(self.model_uri)
-
-# 使用模型進行預測
-result = model.predict(model_input)
+class ModelManager:
+    _instance = None
+    _lock = threading.Lock()
+    
+    def _preload_model(self):
+        # 預加載模型
+        self.model = mlflow.pyfunc.load_model(self.model_uri)
+    
+    def predict(self, data):
+        # 使用模型進行預測
+        result = model.predict(data)
 ```
 
-模型加載通過 MLflow 的 Python 客戶端 API 實現，這使得可以無縫集成不同類型的模型（如 Wikipedia 代理、聊天代理等）。
+模型管控透過 MLflow ，用來作 模型 的 加載、版本管理和監控。
 
 ## 4. 數據層 (Schema Layer)
 
-位於 `porygon_api/app/agent/schemas.py` 和 `porygon_api/schemas.py`
+位於 `porygon_api/app/AIservice/schemas.py` 和 `porygon_api/app/UserQuery/schemas.py`
 
-### 主要職責
+### 職責
 
 - 定義請求和響應的數據結構
 - 實現數據驗證邏輯
@@ -108,92 +112,187 @@ result = model.predict(model_input)
 ### 實現細節
 
 ```python
-# schemas.py - 定義 API 數據模型
+# AIservice/schemas.py
 class QueryRequest(BaseModel):
-    query: str  # 用戶查詢
+    query: str
 
 class PredictResponse(BaseModel):
-    answers: str  # 模型回答
+    answers: str
 
-class QueryResponse(BaseResponse[List[PredictResponse]]):
-    pass  # 繼承通用響應結構
+# UserQuery/schemas.py
+class ItemBase(BaseModel):
+    name: str = Field(..., description="物品名稱")
+    description: Optional[str] = Field(None, description="物品描述")
 ```
 
-使用 Pydantic 模型定義數據結構，提供自動類型轉換和驗證功能，確保數據符合預期格式。
+## 5. 資料庫層 (Database Layer)
 
-## 5. 工具層 (Utils Layer)
-
-位於 `porygon_api/utils.py`
+位於 `porygon_api/database/db_connector.py`
 
 ### 主要職責
 
-- 提供通用功能和工具方法
-- 初始化日誌和其他系統配置
-- 處理 MLflow 連接和認證
+- 管理數據庫連接
+- 提供數據庫操作接口
+- 處理數據庫事務和錯誤
 
 ### 實現細節
 
 ```python
-# utils.py - 通用功能
-def init_logging():
-    # 初始化日誌配置
+class CloudSQLConnector:
+    _instance = None
 
-def login_mlflow():
-    # 設置 MLflow 追蹤和註冊 URI
-    MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
-    MLFLOW_REGISTRY_URI = os.getenv("MLFLOW_REGISTRY_URI")
-    
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    mlflow.set_registry_uri(MLFLOW_REGISTRY_URI)
+    def connect(self):
+        # 連接到 Cloud SQL
+
+    def execute_query(self, query, params=None):
+        # 執行 SQL 查詢
+
+class FirestoreConnector:
+    _instance = None
+
+    def connect(self):
+        # 連接到 Firestore
 ```
 
-工具層提供了整個應用程序中可重用的功能，如日誌配置、MLflow 連接等。
+支持兩種數據庫：
+- **Cloud SQL**: 用於關係式數據存儲
+- **Firestore**: 用於 NoSQL 文檔存儲
 
-## 中間件層 (Middleware Layer)
+## 6. 中間件層 (Middleware Layer)
 
-位於 `porygon_api/middleware/auth.py` 和 `porygon_api/main.py`
+位於 `porygon_api/middleware/`
 
 ### 主要職責
 
-- 處理請求前/後的通用邏輯
-- 實現認證和授權功能
+- 處理 請求前/後的通用邏輯
+- 實現認證和授權功能 (Auth)
 - 記錄請求日誌和監控指標
 
-### 實現細節
+### 邏輯
 
 ```python
-# main.py - 註冊中間件
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    # 記錄請求並處理響應
-
-# auth.py - 認證中間件
+# auth.py
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # 驗證請求並處理授權
+        # 驗證 API Key
+
+# http.py
+class HttpMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # 記錄請求處理時間和結果
 ```
 
-中間件層提供了橫切關注點的處理，如請求日誌、認證授權等，適用於所有請求。
+中間件提供跨越多個請求的通用功能，如認證、性能監控等。
 
-## 數據流
+## 7. 監控與日誌層 (Monitoring & Logging)
 
-下面是一個典型請求的數據流程：
+### 主要職責
 
-1. 客戶端向 `/api/v1/porygon/agent/wikipedia/` 發送 POST 請求
-2. 中間件層處理通用邏輯（日誌、認證等）
-3. 路由層解析請求並調用相應的處理函數
-4. 依賴注入系統提供 AIService 實例
-5. 服務層使用預加載的模型處理請求
-6. 模型層執行推理並返回結果
-7. 服務層格式化模型輸出
-8. 路由層將結果包裝為響應並返回給客戶端
+- 記錄系統日誌
+- 監控系統性能
+- 提供可視化分析數據
+
+### 結構化日誌格式
+
+所有日誌使用 JSON 格式輸出，包含以下字段：
+- **timestamp**: 日誌時間
+- **level**: 日誌級別
+- **module**: 模塊名稱
+- **line**: 代碼行號
+- **message**: 日誌信息
+
+### Cloud Logging 整合
+
+應用自動將日誌發送到 Google Cloud Logging，無需額外配置。當部署到 Cloud Run 時，標準輸出會被自動收集。
+
+### BigQuery 整合
+
+設置 Log Sink 將日誌從 Cloud Logging 導出到 BigQuery，實現以下功能：
+- 長期日誌存儲
+- 複雜查詢分析
+- 性能監控和異常檢測
+
+### 示例查詢
+
+```sql
+-- 查詢端點性能
+SELECT
+  JSON_EXTRACT_SCALAR(jsonPayload, '$.path') AS endpoint,
+  COUNT(*) AS request_count,
+  AVG(CAST(JSON_EXTRACT_SCALAR(jsonPayload, '$.process_time') AS FLOAT64)) AS avg_time
+FROM
+  `project_id.dataset.table`
+WHERE
+  timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
+GROUP BY
+  endpoint
+ORDER BY
+  avg_time DESC;
+```
+
+## 部署架構
+
+### 本地測試
+
+使用以下command在本地運行該 API Service
+
+```bash
+gunicorn porygon_api.main:app \
+  -k uvicorn.workers.UvicornWorker \
+  --preload \
+  --workers 4 \
+  --bind 0.0.0.0:8080 \
+  --timeout 120 \
+  --keep-alive 120
+```
+
+### Cloud Run 部署
+
+1. **構建 Docker 鏡像**：
+   ```bash
+   make build-m1 && make tag && make push
+   ```
+
+2. **部署到 Cloud Run**：
+   ```bash
+   gcloud run deploy "porygon-api" \
+     --image="IMAGE_URL" \
+     --platform=managed \
+     --region="asia-east1" \
+     --allow-unauthenticated \
+     --port=8080 \
+     --memory="4Gi" \
+     --cpu=4
+   ```
+
+3. **環境變數設置**：
+   - `GCP_PROJECT_ID`: GCP 項目 ID
+   - `MODEL_URI`: MLflow 模型 URI
+   - `MLFLOW_TRACKING_URI`: MLflow 追蹤服務器 URI
+
+## API 端點
+
+### AIservice 端點
+1. Document UI: 
 
 ## 關鍵設計模式
 
-1. **單例模式**: 確保服務和模型只被實例化一次
+1. **單例模式**: 確保服務和連接器只被實例化一次
 2. **依賴注入**: 通過 FastAPI 的依賴系統提供服務實例
-3. **預加載策略**: 在服務啟動時預加載模型，提高首次請求性能
-4. **層次分離**: 明確的層次結構，每層有清晰的職責
-5. **數據驗證**: 使用 Pydantic 模型進行請求和響應數據驗證
+3. **中間件鏈**: 通過中間件鏈處理請求的通用邏輯
+4. **預加載策略**: 在服務啟動時預加載模型，提高性能
+5. **日誌集中化**: 將所有日誌集中到 Cloud Logging 和 BigQuery
 
-這種架構設計使得系統具有良好的可維護性、可擴展性和可靠性，同時通過模型預加載和單例模式優化了性能和資源使用。
+## 安全性
+
+- **API 密鑰認證**: 使用 X-API-Key head 進行認證
+- **基於角色的訪問控制**: 不同角色擁有不同的端點訪問權限
+- **請求 ID 追蹤**: 每個請求分配唯一 ID 用於跟踪和審計
+
+## 日誌與監控最佳實踐
+
+1. **結構化日誌**: 使用 JSON 格式確保日誌可以被有效解析和查詢
+2. **包含上下文**: 在日誌中包含請求 ID、用戶 ID 等上下文信息
+3. **性能指標**: 記錄請求處理時間等性能指標
+4. **集中分析**: 將日誌導出到 BigQuery 進行深度分析
+5. **設置警報**: 基於日誌數據設置異常Alert
