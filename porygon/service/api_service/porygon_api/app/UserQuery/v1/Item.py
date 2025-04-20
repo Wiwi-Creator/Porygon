@@ -26,31 +26,31 @@ async def get_item(
         包含物品信息的響應
     """
     try:
-        logger.info(f"收到查詢物品請求: {item_id}")
+        logger.info(f"Get Item Resuest: {item_id}")
         result = await item_service.get_item(item_id)
         if not result or not result.get("id"):
-            logger.error(f"未找到物品: {item_id}")
+            logger.error(f"Item Not Found: {item_id}")
             return BaseResponse[ItemResponse](
                 responseCode=404,
-                responseMessage=f"未找到 ID 為 {item_id} 的物品",
+                responseMessage=f"Item with ID with {item_id} Not Found.",
                 results=None
             )
 
-        logger.info(f"成功獲取物品: {item_id}")
+        logger.info(f"Got Item Successfully : {item_id}")
 
         return BaseResponse[ItemResponse](
             responseCode=200,
-            responseMessage="成功獲取物品",
+            responseMessage="Got Item Successfully.",
             results=result
         )
     except Exception as e:
-        logger.error(f"獲取物品時發生錯誤: {str(e)}")
+        logger.error(f"Error occurred while searching items: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
 
         return BaseResponse[ItemResponse](
             responseCode=500,
-            responseMessage=f"處理失敗: {str(e)}",
+            responseMessage=f"Failed to process request: {str(e)}",
             results=None
         )
 
@@ -73,7 +73,7 @@ async def get_firestore_item(
         包含物品數據的響應
     """
     try:
-        logger.info(f"收到 Firestore 物品查詢請求: {product_id} 在集合 {collection}")
+        logger.info(f"Got Product request: {product_id} on collection: {collection}")
 
         result = await item_service.get_product(
             collection=collection,
@@ -81,28 +81,28 @@ async def get_firestore_item(
         )
 
         if result.get("status") == "error":
-            logger.error(f"Firestore 物品查詢失敗: {result.get('message')}")
+            logger.error(f"Failed to query Product: {result.get('message')}")
             return FirestoreItemResponse(
                 responseCode=404,
-                responseMessage=f"未找到物品: {result.get('message')}",
+                responseMessage=f"Product not found: {result.get('message')}",
                 results=result
             )
 
-        logger.info(f"成功獲取 Firestore 物品: {product_id}")
-        
+        logger.info(f"Get Firestore objects successfully : {product_id}")
+
         return FirestoreItemResponse(
             responseCode=200,
-            responseMessage="成功獲取 Firestore 物品",
+            responseMessage="Get Product successfully.",
             results=result
         )
 
     except Exception as e:
-        logger.error(f"獲取 Firestore 物品時發生錯誤: {str(e)}")
+        logger.error(f"Error occurred while searching product: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
 
         return FirestoreItemResponse(
             responseCode=500,
-            responseMessage=f"處理失敗: {str(e)}",
+            responseMessage=f"Error message: {str(e)}",
             results={"status": "error", "message": str(e)}
         )

@@ -27,7 +27,7 @@ API_KEYS = {
 
 
 def verify_api_key(api_key: str) -> Dict[str, Any]:
-    """驗證 API 金鑰"""
+    """Verify API Key"""
     if api_key in API_KEYS:
         user_info = API_KEYS[api_key].copy()
         return user_info
@@ -39,14 +39,13 @@ def verify_api_key(api_key: str) -> Dict[str, Any]:
 
 
 def check_endpoint_permission(user_info: Dict[str, Any], endpoint_path: str, method: str) -> bool:
-    """檢查用戶是否有權限訪問特定端點"""
+    """Check permisssion of client"""
     role = user_info.get("role", "viewer")
 
     # 獲取該角色的權限
     role_permissions = ROLES_PERMISSIONS.get(role, {})
     allowed_endpoints = role_permissions.get("endpoints", [])
 
-    # 檢查是否允許訪問所有端點
     if "*" in allowed_endpoints:
         return True
 

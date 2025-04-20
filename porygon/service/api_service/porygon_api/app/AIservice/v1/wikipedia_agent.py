@@ -21,20 +21,20 @@ async def query_knowledge_base(
         request: 包含用戶查詢的請求
         ai_service: AI 服務依賴注入
     Returns:
-        查詢響應，包含回答結果
+        包含回答結果
     """
     try:
-        logger.info(f"收到 Wikipedia 查詢請求: {request.query}")
+        logger.info(f"Received Wikipedia query request: {request.query}")
         if model_manager.get_model() is None:
-            logger.error("模型未加載，無法處理查詢")
+            logger.error("Model not loaded. Cannot process the query.")
             return QueryResponse(
                 responseCode=503,
-                responseMessage="系統尚未準備就緒，請稍後再試",
+                responseMessage="The system is not ready yet. Please try again later.",
                 results=[]
             )
 
         results = await ai_service.predict(request)
-        logger.info(f"Wikipedia 查詢處理完成: {results}")
+        logger.info(f"Wikipedia query completed: {results}")
 
         return QueryResponse(
             responseCode=200,
@@ -42,12 +42,12 @@ async def query_knowledge_base(
             results=results
         )
     except Exception as e:
-        logger.error(f"處理 Wikipedia 查詢時發生錯誤: {str(e)}")
+        logger.error(f"An error occurred while processing the Wikipedia query: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
 
         return QueryResponse(
             responseCode=500,
-            responseMessage=f"處理失敗: {str(e)}",
+            responseMessage=f"Query failed: {str(e)}",
             results=[]
         )

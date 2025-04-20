@@ -8,12 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class CloudSQLConnector:
-    """Cloud SQL (PostgreSQL) 連接器，使用 SQLAlchemy"""
+    """Cloud SQL (PostgreSQL) connector, using SQLAlchemy"""
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
-            logger.info("創建 CloudSQLConnector 單例")
+            logger.info("Creating CloudSQLConnector singleton")
             cls._instance = super(CloudSQLConnector, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
@@ -22,7 +22,7 @@ class CloudSQLConnector:
         if self._initialized:
             return
 
-        logger.info("初始化 CloudSQLConnector")
+        logger.info("Initializing CloudSQLConnector")
         self.db_host = os.getenv("DB_HOST", "35.187.145.181")
         self.db_user = os.getenv("DB_USER", "postgres")
         self.db_pass = os.getenv("DB_PASSWORD", "mlflow")
@@ -32,10 +32,10 @@ class CloudSQLConnector:
         self._initialized = True
 
     def connect(self):
-        """建立與 Cloud SQL 的連接池"""
+        """Establish a connection pool to Cloud SQL"""
         if self.engine is None:
             try:
-                logger.info(f"連接到 Cloud SQL: {self.db_host}:{self.db_port}/{self.db_name}")
+                logger.info(f"Connecting to Cloud SQL: {self.db_host}:{self.db_port}/{self.db_name}")
 
                 self.engine = sqlalchemy.create_engine(
                     sqlalchemy.engine.url.URL.create(
@@ -56,9 +56,9 @@ class CloudSQLConnector:
                 with self.engine.connect() as conn:
                     conn.execute(sqlalchemy.text("SELECT 1"))
 
-                logger.info("Cloud SQL 連接池建立成功")
+                logger.info("Cloud SQL connection pool created successfully")
             except Exception as e:
-                logger.error(f"Cloud SQL 連接失敗: {str(e)}")
+                logger.error(f"Cloud SQL connection failed: {str(e)}")
                 raise
 
         return self.engine
@@ -94,25 +94,25 @@ class CloudSQLConnector:
                     return {"status": "success", "rows_affected": result.rowcount}
 
         except Exception as e:
-            logger.error(f"SQL 查詢執行失敗: {str(e)}")
+            logger.error(f"SQL query execution failed: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return {"status": "error", "message": str(e)}
 
     def close(self):
-        """關閉數據庫連接池"""
+        """Close the database connection pool"""
         if self.engine:
             self.engine.dispose()
-            logger.info("Cloud SQL 連接池已關閉")
+            logger.info("Cloud SQL connection pool closed")
 
 
 class FirestoreConnector:
-    """Firestore 連接器"""
+    """Firestore connector"""
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
-            logger.info("創建 FirestoreConnector 單例")
+            logger.info("Creating FirestoreConnector singleton")
             cls._instance = super(FirestoreConnector, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
@@ -121,20 +121,20 @@ class FirestoreConnector:
         if self._initialized:
             return
 
-        logger.info("初始化 FirestoreConnector")
+        logger.info("Initializing FirestoreConnector")
         self.project_id = os.getenv("GCP_PROJECT_ID", "genibuilder")
         self.client = None
         self._initialized = True
 
     def connect(self):
-        """建立與 Firestore 的連接"""
+        """Establish a connection to Firestore"""
         if self.client is None:
             try:
-                logger.info(f"連接到 Firestore: 專案 {self.project_id}")
+                logger.info(f"Connecting to Firestore: Project {self.project_id}")
                 self.client = firestore.Client(project=self.project_id, database="default")
-                logger.info("Firestore 連接成功")
+                logger.info("Firestore connection successful")
             except Exception as e:
-                logger.error(f"Firestore 連接失敗: {str(e)}")
+                logger.error(f"Firestore connection failed: {str(e)}")
                 raise
 
         return self.client

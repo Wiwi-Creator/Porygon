@@ -11,7 +11,7 @@ class AIService:
 
     def __new__(cls):
         if cls._instance is None:
-            logger.info("創建 AIService 單例")
+            logger.info("Creating AIService singleton instance")
             cls._instance = super(AIService, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
@@ -19,7 +19,7 @@ class AIService:
     def __init__(self):
         if self._initialized:
             return
-        logger.info("初始化 AIService")
+        logger.info("Initializing AIService")
         self._initialized = True
 
     async def predict(self, request: QueryRequest) -> List[PredictResponse]:
@@ -28,29 +28,29 @@ class AIService:
             request: 查詢請求，包含用戶輸入
 
         Returns:
-            包含模型預測結果的響應列表
+            包含模型預測結果的 List
         """
         try:
             model_input = [{"input": request.query}]
-            logger.info(f"準備模型輸入: {model_input}")
+            logger.info(f"Preparing model input: {model_input}")
 
             result = model_manager.predict(model_input)
 
             if result is None:
-                logger.error("預測結果為空")
-                return [PredictResponse(answers="預測失敗，請稍後再試")]
+                logger.error("Prediction result is empty")
+                return [PredictResponse(answers="Prediction failed. Please try again later.")]
 
-            logger.info(f"原始預測結果: {result}")
+            logger.info(f"Raw prediction result: {result}")
 
             if isinstance(result, list) and len(result) > 0:
                 answer = str(result[0])
             else:
                 answer = str(result)
 
-            logger.info(f"格式化後的回答: {answer}")
+            logger.info(f"Formatted answer: {answer}")
             return [PredictResponse(answers=answer)]
         except Exception as e:
-            logger.error(f"預測處理過程中發生錯誤: {str(e)}")
+            logger.error(f"Error occurred during prediction: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            return [PredictResponse(answers=f"服務發生錯誤: {str(e)[:100]}")]
+            return [PredictResponse(answers=f"An internal error occurred: {str(e)[:100]}")]

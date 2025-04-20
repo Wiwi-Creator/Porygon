@@ -7,12 +7,12 @@ logger = logging.getLogger(__name__)
 
 
 class ItemService:
-    """物品服務，提供對 Cloud SQL 和 Firestore 的操作"""
+    """提供搜尋資料庫服務，提供對 Cloud SQL 和 Firestore 的操作"""
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
-            logger.info("創建 ItemService 單例")
+            logger.info("Creating ItemService singleton instance")
             cls._instance = super(ItemService, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
@@ -20,47 +20,48 @@ class ItemService:
     def __init__(self):
         if self._initialized:
             return
-        logger.info("初始化 ItemService")
+        logger.info("Initializing ItemService")
         self._initialized = True
 
     async def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
-        """從 Cloud SQL 獲取特定物品
+        """
+        Retrieve a specific item from Cloud SQL.
 
         Args:
-            item_id: 物品 ID
+            item_id: The ID of the item.
 
         Returns:
-            包含物品數據的字典，如果未找到則返回 None
+            A dictionary containing item data if found, otherwise None.
         """
         try:
-            # 使用命名參數的 SQL 查詢
+            # SQL query using named parameters
             query = """
             SELECT id, name, description, price, quantity, category
             FROM items
             WHERE id = :id
             """
 
-            # 參數字典
+            # Parameter dictionary
             params = {"id": item_id}
 
-            logger.info(f"準備從 Cloud SQL 查詢物品: {item_id}")
+            logger.info(f"Querying Cloud SQL for item: {item_id}")
             result = cloud_sql_connector.execute_query(query, params)
 
             if result["status"] == "success" and "data" in result and result["data"]:
                 item = result["data"][0]
-                logger.info(f"成功獲取物品: {item_id}")
+                logger.info(f"Successfully retrieved item: {item_id}")
 
-                # 將缺失的屬性設置為 None
+                # Set missing optional fields to None
                 item.setdefault("tags", None)
                 item.setdefault("properties", None)
 
                 return item
             else:
-                logger.error(f"未找到物品: {item_id}")
+                logger.error(f"Item not found: {item_id}")
                 return None
 
         except Exception as e:
-            logger.error(f"查詢物品時發生錯誤: {str(e)}")
+            logger.error(f"Error occurred while querying item: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return None
@@ -76,7 +77,7 @@ class ItemService:
             包含物品數據的字典或錯誤信息
         """
         try:
-            logger.info(f"準備從 Firestore 透過 product_id: {product_id} 查詢集合: {collection}")
+            logger.info(f"Querying Firestore collection '{collection}' for product_id: {product_id}")
             client = firestore_connector.connect()
             docs = (
                 client.collection(collection)
@@ -86,22 +87,22 @@ class ItemService:
             doc = next(docs, None)
 
             if doc and doc.exists:
-                logger.info(f"成功從 Firestore 查到 product_id: {product_id}")
+                logger.info(f"Successfully retrieved product_id: {product_id} from Firestore")
                 item_data = doc.to_dict()
-                item_data["id"] = doc.id  # 加入 firestore 文件 ID
+                item_data["id"] = doc.id
                 return {
                     "status": "success",
                     "data": item_data
                 }
             else:
-                logger.error(f"Firestore 中找不到 product_id 為 {product_id} 的文件")
+                logger.error(f"No document found in Firestore with product_id: {product_id}")
                 return {
                     "status": "error",
-                    "message": f"找不到 product_id 為 {product_id} 的文件"
+                    "message": f"No document found with product_id: {product_id}"
                 }
 
         except Exception as e:
-            logger.error(f"從 Firestore 查詢 product_id 時發生錯誤: {str(e)}")
+            logger.error(f"Error occurred while querying Firestore with product_id: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return {
