@@ -1,7 +1,6 @@
 import os
 import mlflow
 from langchain.agents import Tool, AgentExecutor, create_react_agent
-from langchain_openai import AzureChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.tools.render import render_text_description
@@ -30,13 +29,6 @@ tools = [
         description="Use this to perform mathematical calculations. Input should be a mathematical expression."
     )
 ]
-
-#llm = AzureChatOpenAI(
-#    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-#    azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
-#    openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-#    temperature=0.1
-#)
 
 llm = ChatXAI(
         model="grok-2-1212",

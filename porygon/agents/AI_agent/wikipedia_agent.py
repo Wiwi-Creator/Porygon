@@ -1,6 +1,5 @@
 import mlflow
 from langchain.agents import AgentType, initialize_agent, load_tools
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_xai import ChatXAI
 
