@@ -81,17 +81,28 @@ class BigQueryLoggingMiddleware(BaseHTTPMiddleware):
             process_time = time.time() - start_time
             log_output = log_capture.getvalue()
 
-            if status_code != 200:
-                error_messages = {
-                    400: "Bad Request",
-                    401: "Unauthorized",
-                    403: "Forbidden",
-                    404: "Endpoint Not Found",
-                    405: "Method Not Allowed",
-                    500: "Internal Server Error"
-                }
-                error = error_messages.get(status_code, f"HTTP Error: {status_code}")
+            if status_code != 200 and error is None:
+                if 400 <= status_code < 500:
+                    error = f"Client Error: HTTP {status_code}"
+                elif 500 <= status_code < 600:
+                    error = f"Server Error: HTTP {status_code}"
+                else:
+                    error = f"HTTP Status: {status_code}"
 
+                if response_body_str:
+                    try:
+                        response_data = json.loads(response_body_str)
+                        if isinstance(response_data, dict):
+                            error_detail = (
+                                response_data.get("detail") or
+                                response_data.get("error") or
+                                response_data.get("message") or
+                                response_data.get("responseMessage")
+                            )
+                            if error_detail:
+                                error = f"{error} - {error_detail}"
+                    except (json.JSONDecodeError, ValueError):
+                        pass
             row = {
                 "request_id": request_id,
                 "request_body": request_body_str[:8000] if request_body_str else "",

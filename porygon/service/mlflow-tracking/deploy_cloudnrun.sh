@@ -2,14 +2,11 @@
 
 set -e
 
-make docker-auth
-make build-m1 && make tag && make push
-
 ### -------- CONFIGURATION --------
 PROJECT_ID="genibuilder"
 REGION="asia-east1"
 SERVICE_NAME="mlflow"
-IMAGE="asia-east1-docker.pkg.dev/genibuilder/mlflow-gcp/mlflow-gcp:latest"
+IMAGE="asia-east1-docker.pkg.dev/genibuilder/mlflow-gcp/mlflow-gcp@sha256:440721510c8541052a4d834490463801db1a00439a92cba7066ec0216fcb68dd"
 PORT=8080
 MEMORY="2Gi"
 CPU=2

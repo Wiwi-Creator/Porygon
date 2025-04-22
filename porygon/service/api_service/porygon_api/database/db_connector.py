@@ -37,6 +37,19 @@ class CloudSQLConnector:
             try:
                 logger.info(f"Connecting to Cloud SQL: {self.db_host}:{self.db_port}/{self.db_name}")
 
+                # cloud run 上用 外部IP
+                #connection_string = (
+                #        f"postgresql+pg8000://{self.db_user}:{self.db_pass}@"
+                #        f"/{self.db_name}?unix_sock=/cloudsql/{self.cloud_sql_instance}/.s.PGSQL.5432"
+                #    )
+                #self.engine = sqlalchemy.create_engine(
+                #        connection_string,
+                #        pool_size=5,
+                #        max_overflow=2,
+                #        pool_timeout=30,
+                #        pool_recycle=1800,
+                #    )
+
                 self.engine = sqlalchemy.create_engine(
                     sqlalchemy.engine.url.URL.create(
                         drivername="postgresql+pg8000",
