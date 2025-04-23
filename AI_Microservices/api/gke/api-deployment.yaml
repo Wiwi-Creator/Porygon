@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: porygon-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: porygon-api
+  template:
+    metadata:
+      labels:
+        app: porygon-api
+    spec:
+      containers:
+      - name: porygon-api
+        image: asia-east1-docker.pkg.dev/genibuilder/porygon-api/porygon-api:latest
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "4"
+        env:
+        - name: GCP_PROJECT
+          value: "genibuilder"
+        - name: PYTHONPATH
+          value: "/app"
+        - name: MODEL_URI
+          value: "gs://wiwi-bucket/1/15a6b7e29ad34d3fa1484ee9e0621774/artifacts/porygon_chain"
+        - name: MLFLOW_TRACKING_URI
+          value: "https://mlflow-931091704211.asia-east1.run.app"
+        - name: MLFLOW_REGISTRY_URI
+          value: "https://mlflow-931091704211.asia-east1.run.app"
+        - name: MLFLOW_TRACKING_INSECURE_TLS
+          value: "true"
+        - name: PYTHONHTTPSVERIFY
+          value: "0"
+      serviceAccountName: porygon-api-sa

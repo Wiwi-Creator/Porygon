@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+      - name: mlflow
+        image: asia-east1-docker.pkg.dev/genibuilder/mlflow-gcp/mlflow-gcp:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GCP_PROJECT
+          value: "genibuilder"
+      serviceAccountName: porygon-api-sa

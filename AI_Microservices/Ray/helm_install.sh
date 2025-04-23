@@ -1,0 +1,1 @@
+helm install kuberay-operator kuberay/kuberay-operator --version 1.2.2
