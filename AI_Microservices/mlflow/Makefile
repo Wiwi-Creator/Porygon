@@ -1,6 +1,6 @@
-IMAGE_NAME=mlflow-gcp
+IMAGE_NAME=wikipedia-agent
 GCP_PROJECT=genibuilder
-AR_REGISTRY_NAME=mlflow-gcp
+AR_REGISTRY_NAME=wikipedia-agent
 AR_REGION=asia-east1
 VERSION=latest
 build:

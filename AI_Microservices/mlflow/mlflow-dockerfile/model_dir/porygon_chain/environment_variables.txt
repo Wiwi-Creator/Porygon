@@ -1,0 +1,6 @@
+# This file records environment variable names that are used during model inference.
+# They might need to be set when creating a serving endpoint from this model.
+# Note: it is not guaranteed that all environment variables listed here are required
+AZURE_OPENAI_API_KEY
+SERPAPI_API_KEY
+XAI_API_KEY

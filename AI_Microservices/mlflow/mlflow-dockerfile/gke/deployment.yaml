@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wikipedia-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: wikipedia-agent
+  template:
+    metadata:
+      labels:
+        app: wikipedia-agent
+    spec:
+      containers:
+      - name: model-server
+        image: asia-east1-docker.pkg.dev/genibuilder/wikipedia-agent/wikipedia-agent:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 15

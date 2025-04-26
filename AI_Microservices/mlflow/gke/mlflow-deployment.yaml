@@ -1,3 +1,4 @@
+# mlflow-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,10 +15,13 @@ spec:
     spec:
       containers:
       - name: mlflow
-        image: asia-east1-docker.pkg.dev/genibuilder/mlflow-gcp/mlflow-gcp:latest
+        image: asia-east1-docker.pkg.dev/genibuilder/mlflow-gcp/mlflow-gcp@sha256:c41ba2830c193181a3d90e996a92371471f7f402cd2fb313b79963b8e3a74074
         ports:
-        - containerPort: 8080
+        - containerPort: 5000
         env:
         - name: GCP_PROJECT
           value: "genibuilder"
-      serviceAccountName: porygon-api-sa
+        - name: PORT
+          value: "5000"
+        - name: HOST
+          value: "0.0.0.0"

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wikipedia
+  labels:
+    client: wikipedia
+spec:
+  containers:
+    - name: wikipedia-container
+      image: asia-east1-docker.pkg.dev/genibuilder/wikipedia-agent/wikipedia-agent:latest
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 8080
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "1"

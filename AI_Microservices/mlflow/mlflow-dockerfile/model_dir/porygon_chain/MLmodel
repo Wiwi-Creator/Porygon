@@ -1,0 +1,32 @@
+artifact_path: porygon_chain
+flavors:
+  langchain:
+    code: null
+    langchain_version: 0.3.23
+    streamable: true
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.langchain
+    model_code_path: /Users/wiwi_kuo/Documents/GitHub/Porygon/porygon/agent/wikipedia_agent.py
+    predict_stream_fn: predict_stream
+    python_version: 3.11.10
+    streamable: true
+is_signature_from_type_hint: false
+mlflow_version: 2.21.3
+model_size_bytes: 956
+model_uuid: 76a40e044cc14f37984bf9fdb0488d4f
+prompts: null
+run_id: 15a6b7e29ad34d3fa1484ee9e0621774
+saved_input_example_info:
+  artifact_path: input_example.json
+  serving_input_path: serving_input_example.json
+  type: json_object
+signature:
+  inputs: '[{"type": "string", "name": "input", "required": true}]'
+  outputs: '[{"type": "string", "name": "input", "required": true}, {"type": "string",
+    "name": "output", "required": true}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2025-04-19 10:44:55.317574'
