@@ -7,10 +7,19 @@ metadata:
 spec:
   containers:
     - name: wikipedia-container
-      image: asia-east1-docker.pkg.dev/genibuilder/wikipedia-agent/wikipedia-agent:latest
+      image: asia-east1-docker.pkg.dev/genibuilder/wikipedia-agent/wikipedia-agent@sha256:2791b49d20d24375c1fd0a886a02416c64b98faf24b70d7ca957c794f8d236c9
       imagePullPolicy: IfNotPresent
       ports:
         - containerPort: 8080
+      env:
+        - name: XAI_API_KEY
+          value: "xai-AbFqy5cxF1ZgS3LbhrLywjju7EKwaqMDAVKtjYnsuMgoJQjnjiiadmkZZR1CzVcjOsIF87qdfdKyygIT"
+        - name: XAI_DEPLOYMENT_NAME
+          value: "grok-2-latest"
+        - name: XAI_ENDPOINT
+          value: "https://api.x.ai/v1"
+        - name: GUNICORN_CMD_ARGS
+          value: "--timeout 60 -k gevent --worker-connections 1000"
       resources:
         requests:
           memory: "1Gi"
@@ -18,8 +27,3 @@ spec:
         limits:
           memory: "2Gi"
           cpu: "1"
-
-      lifecycle:
-        preStop:
-          exec:
-            command: ["/bin/sh", "-c", "sleep 10"]
