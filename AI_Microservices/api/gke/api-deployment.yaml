@@ -29,8 +29,6 @@ spec:
           value: "genibuilder"
         - name: PYTHONPATH
           value: "/app"
-        - name: MODEL_URI
-          value: "gs://wiwi-bucket/1/15a6b7e29ad34d3fa1484ee9e0621774/artifacts/porygon_chain"
         - name: MLFLOW_TRACKING_URI
           value: "https://mlflow-931091704211.asia-east1.run.app"
         - name: MLFLOW_REGISTRY_URI

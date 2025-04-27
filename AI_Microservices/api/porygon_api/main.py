@@ -3,7 +3,6 @@ import logging
 from fastapi import FastAPI
 from fastapi import Query
 from fastapi.middleware.cors import CORSMiddleware
-from porygon_api.model_manager import model_manager
 from porygon_api.app.AIservice.router import router as agent_router
 from porygon_api.app.UserQuery.router import router as userquery_router
 from porygon_api.middleware.auth import AuthMiddleware

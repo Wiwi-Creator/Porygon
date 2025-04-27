@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: porygon-api-pod
+  labels:
+    app: porygon-api
+spec:
+  containers:
+  - name: porygon-api
+    image: asia-east1-docker.pkg.dev/genibuilder/porygon-api/porygon-api:latest
+    ports:
+    - containerPort: 8000
+    resources:
+      requests:
+        memory: "4Gi"
+        cpu: "2"
+      limits:
+        memory: "8Gi"
+        cpu: "4"
+    env:
+    - name: GCP_PROJECT
+      value: "genibuilder"
+    - name: PYTHONPATH
+      value: "/app"
+    - name: MLFLOW_TRACKING_URI
+      value: "https://mlflow-931091704211.asia-east1.run.app"
+    - name: MLFLOW_REGISTRY_URI
+      value: "https://mlflow-931091704211.asia-east1.run.app"
+    - name: MLFLOW_TRACKING_INSECURE_TLS
+      value: "true"
+    - name: PYTHONHTTPSVERIFY
+      value: "0"
+  restartPolicy: Always
