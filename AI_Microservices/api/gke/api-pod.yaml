@@ -22,6 +22,8 @@ spec:
       value: "genibuilder"
     - name: PYTHONPATH
       value: "/app"
+    - name: MLFLOW_SERVING_ENDPOINT
+      value: "http://wikipedia-service:80"
     - name: MLFLOW_TRACKING_URI
       value: "https://mlflow-931091704211.asia-east1.run.app"
     - name: MLFLOW_REGISTRY_URI
@@ -30,4 +32,5 @@ spec:
       value: "true"
     - name: PYTHONHTTPSVERIFY
       value: "0"
+
   restartPolicy: Always

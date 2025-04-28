@@ -9,6 +9,7 @@ from porygon_api.middleware.auth import AuthMiddleware
 from porygon_api.middleware.http import HttpMiddleware
 from porygon_api.middleware.logging import BigQueryLoggingMiddleware
 from google.cloud import bigquery
+from porygon_api.model_manager import model_manager
 from porygon_api.middleware.logging import bq_client
 
 
@@ -86,7 +87,6 @@ async def get_api_metrics(date: str = Query(None, description="日期格式 YYYY
         logging.error(f"Error retrieving metrics: {str(e)}")
         return {"error": str(e), "total_requests": 0, "average_latency_ms": 0, "error_rate": 0}
 
-# 應用啟動事件處理
 @app.on_event("startup")
 async def startup_event():
     """應用啟動時執行的操作"""

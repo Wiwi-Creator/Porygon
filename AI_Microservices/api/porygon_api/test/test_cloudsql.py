@@ -7,14 +7,13 @@ def connect_tcp_socket() -> sqlalchemy.engine.base.Engine:
     Initializes a TCP connection pool for a Cloud SQL instance of Postgres
     using pg8000 driver and SQLAlchemy.
     """
-    # 讀取環境變數
     db_host = "35.187.145.181"
     db_user = "postgres"
     db_pass = "mlflow"
     db_name = "mlflow"
     db_port = int(os.environ.get("DB_PORT", 5432))
 
-    # 建立 SQLAlchemy engine
+    # SQLAlchemy engine
     pool = sqlalchemy.create_engine(
         sqlalchemy.engine.url.URL.create(
             drivername="postgresql+pg8000",  # 使用 pg8000 driver
@@ -32,7 +31,6 @@ def connect_tcp_socket() -> sqlalchemy.engine.base.Engine:
     return pool
 
 
-# ✅ 測試 query
 if __name__ == "__main__":
     engine = connect_tcp_socket()
 
