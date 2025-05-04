@@ -21,7 +21,7 @@ class MLflowModelManager:
             return
 
         logger.info("Initializing MLflowModelManager")
-
+        ## 注意 這邊需要使用的是 Internal IP or External IP 端看你的 API server 架設在哪裡
         self.mlflow_endpoint = os.getenv(
             "MLFLOW_SERVING_ENDPOINT",
             "http://35.201.255.108"
@@ -50,14 +50,14 @@ class MLflowModelManager:
 
             logger.info(f"Sending request to MLflow serving endpoint: {self.endpoint_url}")
             logger.info(f"Request payload: {payload}")
-
+            logger.info(f"Attempting to connect to: {self.endpoint_url}")
             response = requests.post(
                 url=self.endpoint_url,
                 json=payload,
                 headers=headers,
-                timeout=30  # 設置超時時間
+                timeout=30
             )
-
+            logger.info(f"Response status code: {response.status_code}")
             response.raise_for_status()
             result = response.json()
 

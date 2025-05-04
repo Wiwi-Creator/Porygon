@@ -25,7 +25,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: ["/bin/sh", "-c", "ray stop"]  # 停止 Ray
+                command: ["/bin/sh", "-c", "ray stop"]  # stop Ray
           ports:
           - containerPort: 6379
             name: gcs

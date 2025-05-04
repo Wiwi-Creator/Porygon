@@ -40,3 +40,9 @@ gcloud compute routers nats create porygon-nat \
   --auto-allocate-nat-external-ips \
   --nat-all-subnet-ip-ranges \
   --region=asia-east1
+
+# Create VPC connector 確保 IP range 不重疊
+gcloud compute networks vpc-access connectors create porygon-vpc-connector \
+  --region=asia-east1 \
+  --network=porygon-vpc \
+  --range=10.8.0.0/28

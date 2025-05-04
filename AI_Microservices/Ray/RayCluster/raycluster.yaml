@@ -1,0 +1,62 @@
+apiVersion: ray.io/v1alpha1
+kind: RayCluster
+metadata:
+  name: porygon-ai-cluster
+spec:
+  rayVersion: "2.9.0"
+  enableInTreeAutoscaling: true
+  headGroupSpec:
+    serviceType: LoadBalancer
+    rayStartParams:
+      dashboard-host: "0.0.0.0"
+    template:
+      spec:
+        containers:
+        - name: ray-head
+          image: asia-east1-docker.pkg.dev/genibuilder/ray-agents/ray-agents:latest
+          resources:
+            limits:
+              cpu: 2
+              memory: 4Gi
+            requests:
+              cpu: 2
+              memory: 4Gi
+          env:
+          - name: MLFLOW_TRACKING_URI
+            value: "https://mlflow-931091704211.asia-east1.run.app"
+          - name: MLFLOW_TRACKING_INSECURE_TLS
+            value: "true"
+          - name: WIKIPEDIA_AGENT_MODEL_URI
+            value: "models:/wikipedia-agent/production"
+          ports:
+          - containerPort: 6379
+            name: gcs
+          - containerPort: 8265
+            name: dashboard
+          - containerPort: 10001
+            name: client
+  workerGroupSpecs:
+  - groupName: ai-workers
+    replicas: 2
+    minReplicas: 2
+    maxReplicas: 10
+    rayStartParams: {}
+    template:
+      spec:
+        containers:
+        - name: ray-worker
+          image: asia-east1-docker.pkg.dev/genibuilder/ray-agents/ray-agents:latest
+          resources:
+            limits:
+              cpu: 4
+              memory: 8Gi
+            requests:
+              cpu: 2
+              memory: 4Gi
+          env:
+          - name: MLFLOW_TRACKING_URI
+            value: "https://mlflow-931091704211.asia-east1.run.app"
+          - name: MLFLOW_TRACKING_INSECURE_TLS
+            value: "true"
+          - name: WIKIPEDIA_AGENT_MODEL_URI
+            value: "models:/wikipedia-agent/production"
