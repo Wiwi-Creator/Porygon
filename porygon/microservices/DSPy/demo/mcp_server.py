@@ -42,7 +42,7 @@ class Ticket(BaseModel):
 
 
 user_database = {
-    "Adam": UserProfile(user_id="1", name="Adam", email="adam@gmail.com"),
+    "Wiwi": UserProfile(user_id="1", name="Wiwi", email="wiwi@gmail.com"),
     "Bob": UserProfile(user_id="2", name="Bob", email="bob@gmail.com"),
     "Chelsie": UserProfile(user_id="3", name="Chelsie", email="chelsie@gmail.com"),
     "David": UserProfile(user_id="4", name="David", email="david@gmail.com"),

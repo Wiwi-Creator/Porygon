@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: porygon-api
-        image: asia-east1-docker.pkg.dev/genibuilder/porygon-api/porygon-api:latest
+        image: asia-east1-docker.pkg.dev/${PROJECT_ID}/porygon-api/porygon-api:latest
         ports:
         - containerPort: 8000
         resources:
@@ -28,7 +28,7 @@ spec:
             cpu: "4"
         env:
         - name: GCP_PROJECT
-          value: "genibuilder"
+          value: "${PROJECT_ID}"
         - name: PYTHONPATH
           value: "/app"
         - name: MODEL_URI

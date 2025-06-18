@@ -15,10 +15,10 @@ qa = dspy.Predict(QAModule)
 
 question = "What is the capital of France?"
 
-mlflow.set_tracking_uri("4")
-mlflow.set_registry_uri("https://mlflow-931091704211.asia-east1.run.app")
+mlflow.set_registry_uri("https://mlflow-server-936256038486.asia-east1.run.app")
+mlflow.set_tracking_uri("https://mlflow-server-936256038486.asia-east1.run.app")
 
-EXPERIMENT_NAME = "DSPy_demo"
+EXPERIMENT_NAME = "DSPy_Trace_DEMO"
 experiment_info = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
 if experiment_info:
     mlflow.set_experiment(experiment_id=experiment_info.experiment_id)

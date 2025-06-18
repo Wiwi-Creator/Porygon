@@ -9,7 +9,7 @@ set -e
 PROJECT_ID="genibuilder"
 REGION="asia-east1"
 SERVICE_NAME="mlflow"
-IMAGE="asia-east1-docker.pkg.dev/genibuilder/mlflow-gcp/mlflow-gcp:latest"
+IMAGE="asia-east1-docker.pkg.dev/genibuilder/mlflow-gcp/mlflow-gcp@sha256:440721510c8541052a4d834490463801db1a00439a92cba7066ec0216fcb68dd"
 PORT=8080
 MEMORY="8Gi"
 CPU=4
@@ -22,20 +22,18 @@ CLOUD_SQL="genibuilder:asia-east1:mlflow"
 ### -------- DEPLOY TO CLOUD RUN --------
 echo "Deploying MLflow to Cloud Run..."
 
-gcloud run deploy "$SERVICE_NAME" \
+gcloud run deploy "mlflow-private" \
   --project="$PROJECT_ID" \
   --image="$IMAGE" \
   --concurrency ${CONCURRENCY} \
   --max-instances ${MAX_INSTANCES} \
   --platform=managed \
   --region="$REGION" \
-  --allow-unauthenticated \
+  --no-allow-unauthenticated \
   --port=$PORT \
   --memory="$MEMORY" \
   --cpu="$CPU" \
   --timeout=300 \
   --set-env-vars=GCP_PROJECT=$PROJECT_ID \
   --add-cloudsql-instances=$CLOUD_SQL \
-  --service-account=$SERVICE_ACCOUNT \
-  --vpc-connector ${VPC_CONNECTOR} \
-  --vpc-egress all-traffic
+  --service-account=$SERVICE_ACCOUNT

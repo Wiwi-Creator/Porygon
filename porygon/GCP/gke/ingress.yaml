@@ -8,7 +8,7 @@ metadata:
     networking.gke.io/managed-certificates: "porygon-api-cert"
 spec:
   rules:
-  - host: porygon-api.example.com  # 替換為你的域名
+  - host: porygon-api.example.com
     http:
       paths:
       - path: /*

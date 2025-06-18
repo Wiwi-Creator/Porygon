@@ -16,3 +16,4 @@ __pycache__/
 .log
 mlruns/
 logs/
+.mypy_cache/

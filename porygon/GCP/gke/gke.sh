@@ -1,8 +1,8 @@
-CLUSTER_NAME="api"
-REGION_NAME="asia-east1"
-PROJECT_ID="genibuilder"
-VPC_NAME="default"
-SUBNETWORK_NAME="vpc-asia-east1"
+CLUSTER_NAME=${1}
+REGION_NAME=${2}
+PROJECT_ID=${3}
+VPC_NAME=${4}
+SUBNETWORK_NAME=${5}
 
 echo "Creating GKE Autopilot Cluster(Private) : ${CLUSTER_NAME} , VPC : ${VPC_NAME} , Subnetwork: ${SUBNETWORK_NAME} "
 # auto-pilot
