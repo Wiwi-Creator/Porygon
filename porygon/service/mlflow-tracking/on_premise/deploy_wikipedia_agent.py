@@ -28,7 +28,7 @@ tags = {'Knowledge': 'Pokemon', 'Type': 'Wikipedia', 'Model': 'Grok-2-1212'}
 with mlflow.start_run(run_name="porygon-wikipedia-agent", tags=tags) as run:
     try:
         model_info = mlflow.langchain.log_model(
-            lc_model=os.path.join(os.getcwd(), 'AI_agent', 'wikipedia_agent.py'),
+            lc_model=os.path.join(os.getcwd(), 'wikipedia_agent.py'),
             artifact_path="porygon_chain",
             input_example=input_example,
             signature=signature

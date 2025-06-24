@@ -1,7 +1,7 @@
 import os
 import mlflow
 from mlflow.models import infer_signature
-from wikipedia_agent import agent
+from wikipedia_agent.core.wikipedia_agent import agent
 
 
 MLFLOW_URI = "http://localhost:5010"

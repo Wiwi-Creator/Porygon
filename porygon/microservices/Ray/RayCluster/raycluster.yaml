@@ -13,7 +13,7 @@ spec:
       spec:
         containers:
         - name: ray-head
-          image: asia-east1-docker.pkg.dev/genibuilder/ray-agents/ray-agents:latest
+          image: asia-east1-docker.pkg.dev/$PORJECT_ID/ray-agents/ray-agents:latest
           resources:
             limits:
               cpu: 2
@@ -45,7 +45,7 @@ spec:
       spec:
         containers:
         - name: ray-worker
-          image: asia-east1-docker.pkg.dev/genibuilder/ray-agents/ray-agents:latest
+          image: asia-east1-docker.pkg.dev/$PORJECT_ID/ray-agents/ray-agents:latest
           resources:
             limits:
               cpu: 4
