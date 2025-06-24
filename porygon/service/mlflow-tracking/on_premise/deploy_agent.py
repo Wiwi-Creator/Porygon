@@ -5,7 +5,7 @@ from databricks.sdk import WorkspaceClient
 import os
 
 
-mlflow.set_tracking_uri("http://localhost:5500")
+mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_registry_uri("http://localhost:5000")
 mlflow.langchain.autolog()
 mlflow.login()

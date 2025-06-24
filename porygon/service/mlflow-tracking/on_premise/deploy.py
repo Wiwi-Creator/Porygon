@@ -3,10 +3,10 @@ import mlflow
 from mlflow.pyfunc import PythonModel
 from mlflow.models.signature import infer_signature
 import datetime
-from AI_agent.agent import agent_executor
+from agent.agent import agent_executor
 
 
-mlflow.set_tracking_uri("http://localhost:5010")
+mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.langchain.autolog()
 UC_MODEL_NAME = "Porygon_agent"
 EXPERIMENT_NAME = "/Users/w22151500@gmail.com/Porygon_demo"
