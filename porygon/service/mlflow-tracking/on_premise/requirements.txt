@@ -23,3 +23,6 @@ langgraph-prebuilt==0.1.7
 langgraph-sdk==0.1.60
 langsmith==0.3.19
 wikipedia==1.4.0
+dspy==2.6.22
+dspy-ai==2.6.22
+mcp==1.7.1
