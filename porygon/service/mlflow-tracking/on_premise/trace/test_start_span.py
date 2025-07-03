@@ -5,8 +5,8 @@ from langchain_xai import ChatXAI
 
 llm = ChatXAI(model="grok-2-1212")
 
-mlflow.set_registry_uri("https://mlflow-931091704211.asia-east1.run.app")
-mlflow.set_tracking_uri("https://mlflow-931091704211.asia-east1.run.app")
+mlflow.set_tracking_uri("http://localhost:5000")
+mlflow.set_registry_uri("http://localhost:5000")
 EXPERIMENT_NAME = "Test_Chat_bot"
 experiment_info = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
 if experiment_info:
@@ -15,7 +15,7 @@ else:
     mlflow.create_experiment(EXPERIMENT_NAME)
     mlflow.set_experiment(EXPERIMENT_NAME)
 
-#mlflow.langchain.autolog()
+mlflow.langchain.autolog()
 
 
 def start_session():

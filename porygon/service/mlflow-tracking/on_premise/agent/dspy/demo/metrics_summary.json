@@ -1,0 +1,34 @@
+{
+  "metrics": {
+    "input_tokens": 25,
+    "output_tokens": 37,
+    "total_tokens": 62,
+    "tool_calls": 2,
+    "latency": 9.148194551467896,
+    "baseline_comparison": {
+      "baseline_tokens": 42,
+      "actual_tokens": 37,
+      "token_efficiency": 0.8809523809523809,
+      "baseline_length": 181,
+      "actual_length": 149,
+      "length_efficiency": 0.8232044198895028
+    }
+  },
+  "baseline_comparison": {
+    "baseline_tokens": 42,
+    "actual_tokens": 37,
+    "token_efficiency": 0.8809523809523809,
+    "baseline_length": 181,
+    "actual_length": 149,
+    "length_efficiency": 0.8232044198895028
+  },
+  "cost_analysis": {
+    "input_cost": 0.00025,
+    "output_cost": 0.00111,
+    "total_cost": 0.00136
+  },
+  "efficiency": {
+    "tokens_per_second": 6.777293557891337,
+    "latency_vs_baseline": 0.20581220679958012
+  }
+}

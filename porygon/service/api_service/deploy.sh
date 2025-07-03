@@ -6,18 +6,18 @@ make docker-auth
 make build-m1 && make tag && make push
 
 ### -------- CONFIGURATION --------
-PROJECT_ID="genibuilder"
+PROJECT_ID=$PROJECT_NAME
 REGION="asia-east1"
 SERVICE_NAME="porygon-api"
-MODEL_URI="gs://wiwi-bucket/1/15a6b7e29ad34d3fa1484ee9e0621774/artifacts/porygon_chain"
+MODEL_URI=$MODEL_URI_ON_GCS
 MLFLOW_TRACKING_URI="https://mlflow-931091704211.asia-east1.run.app"
 MLFLOW_REGISTRY_URI="https://mlflow-931091704211.asia-east1.run.app"
-IMAGE="asia-east1-docker.pkg.dev/genibuilder/porygon-api/porygon-api:latest"
+IMAGE=$IMAGE_NAME
 PORT=8000
 MEMORY="16Gi"
 CPU=8
-SERVICE_ACCOUNT="931091704211-compute@developer.gserviceaccount.com"
-CLOUD_SQL="genibuilder:asia-east1:mlflow"
+SERVICE_ACCOUNT=$SERVICE_ACCOUNT
+CLOUD_SQL=$CLOUD_SQL
 ### -------- DEPLOY TO CLOUD RUN --------
 echo "Deploying Porygon API to Cloud Run..."
 

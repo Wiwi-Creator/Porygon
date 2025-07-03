@@ -26,3 +26,4 @@ wikipedia==1.4.0
 dspy==2.6.22
 dspy-ai==2.6.22
 mcp==1.7.1
+tiktoken==0.8.0
